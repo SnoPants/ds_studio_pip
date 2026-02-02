@@ -1,0 +1,1453 @@
+global proc shelf_ADS () {
+    global string $gBuffStr;
+    global string $gBuffStr0;
+    global string $gBuffStr1;
+
+
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Click to place joint, click on existing joint to add to skeleton, click/drag to position joint" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Create Joints" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "kinJoint.png" 
+        -image1 "kinJoint.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "JointTool" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "import maya.cmds as cmds\n\n# Function to calculate the vector between two points\ndef get_vector(pt0=None, pt1=None):\n    dx = pt1[0] - pt0[0]\n    dy = pt1[1] - pt0[1]\n    dz = pt1[2] - pt0[2]\n    return [dx, dy, dz]\n\n# Function to calculate the centroid of a set of nodes\ndef get_centroid(node_array):\n    posX, posY, posZ = 0, 0, 0  # Initialize positions\n\n    for node in node_array:\n        # Query world space translation of each node\n        position = cmds.xform(node, query=True, translation=True, worldSpace=True)\n        posX += position[0]\n        posY += position[1]\n        posZ += position[2]\n\n    # Calculate the centroid as the average position\n    node_count = len(node_array)\n    centroid = [posX / node_count, posY / node_count, posZ / node_count]\n    return centroid\n\n# Get selected nodes and calculate their centroid\nselected_nodes = cmds.ls(selection=True, flatten=True)\ncmds.select(clear=True)  # Deselect everything\ncentroid_position = get_centroid(selected_nodes)\n\n# Create a joint and move it to the calculated centroid\njoint = cmds.joint()\njoint_position = cmds.xform(joint, query=True, translation=True, worldSpace=True)\n\n# Calculate the vector from the joint's current position to the centroid\nvector_to_centroid = get_vector(joint_position, centroid_position)\n\n# Move the joint to the centroid by setting its translation attributes\ncmds.setAttr(f\"{joint}.translateX\", vector_to_centroid[0])\ncmds.setAttr(f\"{joint}.translateY\", vector_to_centroid[1])\ncmds.setAttr(f\"{joint}.translateZ\", vector_to_centroid[2])\n" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "CJ" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "CJ" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "C:/Users/v-adespain/Documents/maya/2024/prefs/icons/soft_purple_circle_with_white_outline.png" 
+        -image1 "C:/Users/v-adespain/Documents/maya/2024/prefs/icons/soft_purple_circle_with_white_outline.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as cmds\n\n# Function to calculate the vector between two points\ndef get_vector(pt0=None, pt1=None):\n    dx = pt1[0] - pt0[0]\n    dy = pt1[1] - pt0[1]\n    dz = pt1[2] - pt0[2]\n    return [dx, dy, dz]\n\n# Function to calculate the centroid of a set of nodes\ndef get_centroid(node_array):\n    posX, posY, posZ = 0, 0, 0  # Initialize positions\n\n    for node in node_array:\n        # Query world space translation of each node\n        position = cmds.xform(node, query=True, translation=True, worldSpace=True)\n        posX += position[0]\n        posY += position[1]\n        posZ += position[2]\n\n    # Calculate the centroid as the average position\n    node_count = len(node_array)\n    centroid = [posX / node_count, posY / node_count, posZ / node_count]\n    return centroid\n\n# Get selected nodes and calculate their centroid\nselected_nodes = cmds.ls(selection=True, flatten=True)\ncmds.select(clear=True)  # Deselect everything\ncentroid_position = get_centroid(selected_nodes)\n\n# Create a joint and move it to the calculated centroid\njoint = cmds.joint(rad= 5.0)\njoint_position = cmds.xform(joint, query=True, translation=True, worldSpace=True)\n\n# Calculate the vector from the joint's current position to the centroid\nvector_to_centroid = get_vector(joint_position, centroid_position)\n\n# Move the joint to the centroid by setting its translation attributes\ncmds.setAttr(f\"{joint}.translateX\", vector_to_centroid[0])\ncmds.setAttr(f\"{joint}.translateY\", vector_to_centroid[1])\ncmds.setAttr(f\"{joint}.translateZ\", vector_to_centroid[2])\n" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Create IK handle on joint chain" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Create IK Handle" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "kinHandle.png" 
+        -image1 "kinHandle.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "IKHandleTool" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 30
+        -enable 1
+        -width 33
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Reset all bindposes to one, and delete all others. Select the root of the joint heirarchy and run to execute. " 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Bind-P" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "Bind-P" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "joint.svg" 
+        -image1 "joint.svg" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as cmds\n\ndef NT_rebuildDagPose():\n    \"\"\"Deletes all existing bind poses and recreates a single new bind pose.\"\"\"\n    \n    # Get selected object(s)\n    sel = cmds.ls(selection=True)\n    \n    if not sel:\n        cmds.error(\"Please select character root\")\n        return\n\n    root_joint = sel[0]\n\n    # Build list of joints\n    joint_list = cmds.listRelatives(root_joint, allDescendents=True, type=\"joint\", fullPath=True) or []\n    joint_list.append(root_joint)  # Add root joint at the end\n\n    dag_poses = []\n    \n    # Find all connected dagPose nodes\n    for joint in joint_list:\n        dag_connections = cmds.listConnections(joint, type=\"dagPose\") or []\n        dag_poses.extend(dag_connections)\n\n    # Remove duplicates from the list\n    dag_poses = list(set(dag_poses))\n\n    connected_skin_clusters = []\n\n    # Build list of connected skin clusters\n    for pose in dag_poses:\n        skin_clusters = cmds.listConnections(pose, type=\"skinCluster\") or []\n        connected_skin_clusters.extend(skin_clusters)\n\n    # Remove duplicates from the skinCluster list\n    connected_skin_clusters = list(set(connected_skin_clusters))\n\n    # Delete existing bind poses\n    if dag_poses:\n        print(\"Deleting dagPoses:\")\n        print(dag_poses)\n        cmds.delete(dag_poses)\n\n    # Create new bind pose\n    cmds.select(joint_list, replace=True)\n    new_dag_pose = cmds.dagPose(save=True, bindPose=True)\n\n    print(f\"New dagPose created: {new_dag_pose}\")\n\n    # Reconnect the new bind pose to skinClusters\n    for skin_cluster in connected_skin_clusters:\n        print(f\"Connecting {new_dag_pose}.message to {skin_cluster}.bindPose\")\n        cmds.connectAttr(f\"{new_dag_pose}.message\", f\"{skin_cluster}.bindPose\", force=True)\n\n# Run the function\nNT_rebuildDagPose()" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Binds corresponding joints by mesh name. Select target mesh group, then source mesh group to run. Make sure mesh names are similiarly named." 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Skin_T" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "Skin_T" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "skin.png" 
+        -image1 "skin.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as cmds\nimport re\nimport difflib\n\ndef get_descendant_geometry(root):\n    \"\"\"Gets all descendant geometry of the given root object or falls back to root if no descendants.\"\"\"\n    descendants = cmds.listRelatives(root, allDescendents=True, shapes=False)\n\n    # Fallback to root if no descendants found\n    if not descendants:\n        descendants = [root]\n\n    filtered_list = [name for name in descendants if 'Shape' not in name and 'Orig' not in name]\n    \n    mesh = []\n    for obj in filtered_list:\n        # Check if it's a mesh transform (has a mesh shape under it) or a mesh shape\n        if cmds.nodeType(obj) == 'mesh':\n            mesh.append(obj)\n        elif cmds.listRelatives(obj, shapes=True, type='mesh'):\n            mesh.append(obj)\n\n    print('got descendants: ', mesh)\n    return mesh\n\n\ndef get_skin_cluster(mesh):\n    \"\"\"Returns the skin cluster connected to the given mesh, or None if not found.\"\"\"\n    history = cmds.listHistory(mesh, pruneDagObjects=True) or []\n    print(f'history of {mesh}: ',history)\n    if history:\n        skin_clusters = [node for node in history if cmds.nodeType(node) == 'skinCluster']\n        if skin_clusters: \n            return mesh, skin_clusters[0]\n        else:\n            cmds.warning(f'No skinCluster in {mesh}')\n            return None\n\ndef get_skinned_descendants(descendants):\n    \"\"\"Gets all skinned descendant geometries of the given root object.\"\"\"\n    \n    print('descendants:', descendants)\n    skinned_meshes = []\n    \n    for mesh in descendants:\n        skin_cluster = get_skin_cluster(mesh)\n        if skin_cluster:\n            skinned_meshes.append((skin_cluster))\n            \n    return skinned_meshes\n            \ndef match_names(name1, name2, threshold=0.95):\n    print('in match names: ', name1, name2)\n    name1_clean = clean(name1)\n    name2_clean = clean(name2)\n    print(name1_clean, name2_clean)\n    \n    similarity = difflib.SequenceMatcher(None, name1_clean, name2_clean).ratio()\n    print('Similarity:', similarity)\n    \n    return similarity >= threshold\n    \ndef clean(name):\n    return re.sub(r'[^a-zA-Z0-9]', '', name.split('|')[-1].lower())\n\ndef skin_selections():\n    selection = cmds.ls(selection=True)\n    print('selected :', selection)\n    if len(selection) != 2:\n        cmds.warning(\"Please select exactly two objects.\")\n        return\n        \n    non_skinned = get_descendant_geometry(selection[0])\n    skinned_meshes = get_descendant_geometry(selection[1])\n    \n    cluster_pairs = []\n    for first in non_skinned:\n        print('non_skinned ',first)\n        for mesh in skinned_meshes:\n            print(mesh)\n            cluster= get_skin_cluster(mesh)[1]\n            print('cluster ', mesh)\n            if match_names(first, mesh):\n                joints = cmds.skinCluster(cluster, query=True,inf=True)  \n                new_skin_cluster = cmds.skinCluster(joints, first, tsb= True)[0]\n                cmds.copySkinWeights(ss= cluster, ds= new_skin_cluster, nm= True, sa= 'closestPoint', ia= 'closestJoint')\n                print(f'Finished creating and copying source skincluster from: {mesh} to: {new_skin_cluster}')\n                cluster_pairs.append(cluster)\n                break\n                \n    for old_cluster in cluster_pairs:\n        cmds.skinCluster(old_cluster, edit=True, unbind=True)\n\n# Run the function\nskin_selections()" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Sets selected mesh to relative space of target joint and sets it to origin." 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "COL_J" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "COL_J" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "collision.png" 
+        -image1 "collision.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as cmds\ndef parent_and_reset_with_options(apply_t=True, apply_r=True):\n    sel = cmds.ls(orderedSelection=True)\n    \n    joint = sel.pop(-1)\n    \n    if cmds.objectType(joint) != 'joint':\n        cmds.warning(f'Your last selection \"{joint}\" is not a joint. Please select a joint as your last selection')\n        return\n        \n    for s, sdx in enumerate(sel):\n        print(sdx)\n        has_parent = cmds.listRelatives(sdx, parent= True) or []\n        print(has_parent)\n        cmds.parent(sdx, joint)\n        cmds.makeIdentity(sdx, apply=True, t=1 if apply_t else 0, r=1 if apply_r else 0, s=0, n=0)\n\n        pivot_pos = cmds.xform(joint, q=True, ws=True, rp=True)\n        cmds.xform(sdx, ws=True, pivots=pivot_pos)\n\n        if has_parent:\n            cmds.parent(sdx, has_parent[0])\n        else:\n            cmds.parent(sdx, w=True)\n    \n        mode = \"Both\" if (apply_t and apply_r) else (\"Translation only\" if apply_t else \"Rotation only\")\n        print(f\"[{mode}] Successfully adjusted pivot from {sdx} to {joint}.\")\n\n# -------------------------\n# Simple UI\n# -------------------------\ndef show_parent_reset_ui():\n    win = \"ParentResetUI\"\n    if cmds.window(win, exists=True):\n        cmds.deleteUI(win)\n\n    cmds.window(win, title=\"Parent + Reset Options\", sizeable=False, mnb=False, mxb=False)\n    col = cmds.columnLayout(adj=True, rs=6, cat=(\"both\", 10))\n\n    cmds.text(label=\"Choose what to transform/freeze on the FIRST selected object:\")\n\n    # 3-option radio group: Translation only, Rotation only, Both\n    # We'll store this control's name to query later.\n    mode_grp = cmds.radioButtonGrp(\n        labelArray3=[\"Translation only\", \"Rotation only\", \"Both\"],\n        numberOfRadioButtons=3,\n        sl=3,  # default to Both\n        cw4=[1, 120, 120, 80],  # column widths (label column is 1px since no label)\n        label=\"\",  # no left label\n    )\n\n    def _apply_callback(*_):\n        sel_mode = cmds.radioButtonGrp(mode_grp, q=True, sl=True)\n        # Map selection to booleans\n        if sel_mode == 1:      # Translation only\n            t_flag, r_flag = True, False\n        elif sel_mode == 2:    # Rotation only\n            t_flag, r_flag = False, True\n        else:                  # Both\n            t_flag, r_flag = True, True\n\n        parent_and_reset_with_options(apply_t=t_flag, apply_r=r_flag)\n\n    cmds.button(label=\"Apply\", h=32, c=_apply_callback)\n\n    cmds.separator(h=8, style=\"none\")\n    cmds.text(label=\"Usage: select FIRST (child) then SECOND (temporary parent).\")\n    cmds.separator(h=8, style=\"none\")\n\n    cmds.showWindow(win)\n\n# Open the UI\nshow_parent_reset_ui()" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Select the root joint of heirarchy and run to freeze transforms on a skinned joint system without problems." 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "FT_SK" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "FT_SK" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "freezeSelected.png" 
+        -image1 "freezeSelected.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as cmds\n\ndef get_skinClusters_for_joint(joint, seen_clusters):\n    outputs = cmds.listConnections(f\"{joint}.worldMatrix[0]\", destination=True, plugs=False) or []\n\n    for node in outputs:\n        if node and cmds.nodeType(node) == 'skinCluster':\n            if node not in seen_clusters:\n                seen_clusters.append(node)    \n\nall_connections = {}\nclusters = []\n\n### get joint heir ###\nselection = cmds.ls(sl=True, type='joint')\nif not selection:\n    raise ValueError(\"Please select a joint.\")\n    \njoint = selection[0]\n\njoints = cmds.listRelatives(joint, ad=True, type='joint') or []\njoints = [joint] + joints\n\nprint(joints)\n\n### save joint connections, and disconnect ###\nprint('disconnecting')\n\nfor jnt in joints:\n    \n    skinClusters = get_skinClusters_for_joint(jnt, clusters)\n    print(clusters)\n    \n    src_attr = f\"{jnt}.worldMatrix[0]\"\n    connections = cmds.listConnections(src_attr, plugs=True, destination=True, source=False) or []\n    print(connections)\n\n    jnt_connections = [(src_attr, con) for con in connections]\n    all_connections[jnt] = jnt_connections\n    for _, con in jnt_connections:\n        try:\n            cmds.disconnectAttr(src_attr,con)\n            print(f\"disconnecting -X- {src_attr} from {con}\")\n        except Exception as e:\n            cmds.warning(f'Failed to disconnect {src_attr} from {con}: {e}')\n\n### freeze transforms per joint ###\nprint('freezing')\n\nfor jnt in joints:\n    #makeIdentity -apply true -t 1 -r 1 -s 1 -n 0 -pn 1;\n    cmds.makeIdentity(jnt, a=True, t=True, r=True, s=True, pn=True)\n    \nprint('reconnecting')\n\nfor jnt, connections in all_connections.items():\n    for src, dest in connections:\n        cmds.connectAttr(src, dest, force= True)\n        print(f\"reconnecting --> {src} to {con}\")\n\n###\nfor cluster in clusters:\n    print(cluster)\n    infs = cmds.listConnections(f\"{cluster}.matrix\")\n    for i, inf in enumerate(infs):\n        m = cmds.getAttr( inf + '.worldInverseMatrix' )\n        cmds.setAttr(f'{cluster}.bindPreMatrix[' + str(i) + ']', m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11], m[12], m[13], m[14], m[15], typ= 'matrix' )\n        \n\n### Reference - This is the code that resets back to the prebind matrix. ###\n\n'''infs = cmds.listConnections('skinCluster33.matrix')\nprint(infs)\n\nfor i, inf in enumerate( infs ):\n    m = cmds.getAttr( inf + '.worldInverseMatrix' )\n    cmds.setAttr('skinCluster33.bindPreMatrix[' + str(i) + ']', m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11], m[12], m[13], m[14], m[15], typ= 'matrix' )\n    \n    \n###\n\n'''\n\n" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Create a locator object on the grid" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Locator" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "locator.png" 
+        -image1 "locator.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "CreateLocator" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Export Tool" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "EXP" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "EXP" 
+        -overlayLabelColor 0.4208 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "exportSmoothSkin.png" 
+        -image1 "exportSmoothSkin.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "from PySide2 import QtWidgets, QtCore, QtUiTools, QtGui\nfrom PySide2.QtWidgets import QApplication\nimport importlib\nimport sys\nimport maya.cmds as mc\nimport os\nimport re\nimport stat\nimport json\n\n\n\"\"\"A Window class that allows for loading a Qt .ui file into Maya.\"\"\"\nglobal slash\nslash = os.sep\nglobal ui_file\nui_file = os.path.join(os.environ['USERPROFILE'], 'Documents', f'maya{slash}scripts{slash}Wearable_SK_Exporter{slash}UI{slash}SK_exporter_interface.ui')\nmap_ui_file = os.path.join(os.environ['USERPROFILE'], 'Documents', f'maya{slash}scripts{slash}Wearable_SK_Exporter{slash}UI{slash}Dynamic_Mapping.ui')\ndir_path = os.path.join(os.environ['USERPROFILE'], 'Documents', f'maya{slash}scripts{slash}Wearable_SK_Exporter')\n\nif not dir_path in sys.path:\n    sys.path.insert(0,dir_path)\n    \ntry:\n    from scripts import wearable_exporter\n    importlib.reload(wearable_exporter)\n    from scripts import Dynamic_Mapping\n    importlib.reload(Dynamic_Mapping)\nexcept Exception as e:\n    print(f\"Error reloading modules: {e}\")\n\ndef getMayaWindow():\n    \"\"\"Get the Maya main window as a QMainWindow instance.\"\"\"\n    app = QtWidgets.QApplication.instance()\n    if not app:\n        app = QtWidgets.QApplication(sys.argv)\n\n    mayaWindow = next(w for w in app.topLevelWidgets() if w.objectName() == \"MayaWindow\")\n    return mayaWindow\n\nclass Window(QtWidgets.QWidget):\n    \"\"\"A window that can be loaded from a Qt .ui file.\"\"\"\n\n    def __init__(self, filePath):\n        \"\"\"Initialize the window.\"\"\"\n        super().__init__()\n        self.filePath = filePath\n        self.MainWindow = None\n        self.ui = None\n        self.loadUIFile()\n        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)\n\n    def loadUIFile(self, parent=None):\n        \"\"\"Load the UI file and return the widget.\"\"\"\n        if parent is None:\n            parent = getMayaWindow()\n        loader = QtUiTools.QUiLoader()\n        uiFile = QtCore.QFile(self.filePath)\n        uiFile.open(QtCore.QFile.ReadOnly)\n        ui = loader.load(uiFile, parent)\n        uiFile.close()\n                \n        ui.A_Dynamic_Mapping.triggered.connect(self.DynamicMapping_Click)\n        ui.QDynamicMap_CheckBox.stateChanged.connect(self.Check_Box_DynamicMapping)\n        ui.QStaticMesh_CheckBox.stateChanged.connect(self.Check_Box_StaticMesh)\n        ui.QDirectoryButton.clicked.connect(self.SetDirectory_Click)\n        ui.QSetJointButton.clicked.connect(self.SetJoint_Click)\n        ui.QSetMeshesButton.clicked.connect(self.SetMeshes_Click)\n        ui.QExportButton.clicked.connect(self.ExportMeshes_Click)\n        ui.QExportProgressBar.setVisible(False)\n        ui.QExitButton.clicked.connect(self.close)\n        \n        self.ui = ui\n        \n        return ui\n    \n    def Check_Box_StaticMesh(self):\n        if self.ui.QStaticMesh_CheckBox.isChecked():\n            self.ui.QRootJoint.setEnabled(False)\n            self.ui.QSetJointButton.setEnabled(False)\n            self.ui.SetJointLabel.setEnabled(False)\n        else:\n            self.ui.QRootJoint.setEnabled(True)\n            self.ui.QSetJointButton.setEnabled(True)\n            self.ui.SetJointLabel.setEnabled(True)\n    \n    def DynamicMapping_Click(self):\n        dwin = Dynamic_Mapping.main(map_ui_file, dir_path)\n        return\n    \n    def Check_Box_DynamicMapping(self):\n        if self.ui.QDynamicMap_CheckBox.isChecked():\n            self.ui.QDirectoryButton.setEnabled(False)\n            self.ui.QDirectoryLocation.setEnabled(False)\n            self.ui.DirectoryLabel.setEnabled(False)\n        else:\n            self.ui.QDirectoryButton.setEnabled(True)\n            self.ui.QDirectoryLocation.setEnabled(True)\n            self.ui.DirectoryLabel.setEnabled(True)\n\n    \n    def SetDirectory_Click(self):\n        \"\"\"Open a file dialog to select a directory.\"\"\"\n        directory = QtWidgets.QFileDialog.getExistingDirectory(self.MainWindow, \"Select Directory\")\n        if directory:\n            self.ui.QDirectoryLocation.clear()\n            self.ui.QDirectoryLocation.setText(directory)    \n        \n    def SetJoint_Click(self):\n        joint= mc.ls(sl=True)[0]\n        if mc.objectType(joint, isType='joint') == 1:\n            self.ui.QRootJoint.clear()\n            root = FindRootJnt(joint)\n            self.ui.QRootJoint.setText(root)\n        else:\n            mc.warning(f\"{joint} is not a 'joint' type.\")\n\n    def SetMeshes_Click(self):\n        self.ui.QMeshList.clear() \n        meshes = mc.ls(sl=True)\n        for i in meshes:\n            shapes = mc.listRelatives(i, shapes=True)\n            \n            if not shapes:\n                mc.warning(f\"{i} is not a mesh. It will not be added to the Export List.\")\n            else:\n                self.ui.QMeshList.addItem(i)\n\n    def GetMeshList(self):\n        \n        list = []\n        \n        numItems = self.ui.QMeshList.count()\n        \n        for i in range(numItems):\n            item = self.ui.QMeshList.item(i)\n            list.append(item.text())\n            \n        return list\n                \n    def ExportMeshes_Click(self):\n\n        use_mapping= self.ui.QDynamicMap_CheckBox.isChecked()\n        use_static= self.ui.QStaticMesh_CheckBox.isChecked()\n        \n        if use_static != True:\n            jnt = self.ui.QRootJoint.text()\n        else:\n            jnt = None\n            \n        meshes = self.GetMeshList()\n        \n        \n        if use_mapping == True:\n            directories = self.load_mapping()\n            for string, path in directories.items():\n                meshes_export = ReplaceCheck(meshes, path)\n        else:\n            directories = self.ui.QDirectoryLocation.text()\n            meshes_export = ReplaceCheck(meshes, directories)\n        \n        self.ui.QExportProgressBar.setMaximum(len(meshes_export))\n        self.ui.QExportProgressBar.setValue(0)\n        \n        try:\n            self.resetProgressBar()\n            self.showProgressBar()\n            wearable_exporter.Main(jnt, meshes_export, directories, use_mapping, use_static, self.update_progress)\n        except Exception as e:\n            mc.error(f\"Error exporting meshes: {e}\")\n        finally:\n            self.hideProgressBar()\n            \n    def load_mapping(self):\n        \n        mapping = {}\n        \n        json_file_path = os.path.join(dir_path,'DynamicMapping.json')\n        \n        if os.path.exists(json_file_path):\n                try:\n                    with open(json_file_path, 'r') as json_file:\n                        data_list = json.load(json_file)\n                    \n                    for data in data_list:\n                        sub_string =  data.get('sub_string', '')\n                        file_path =  data.get('file_path', '')\n                        mapping[sub_string] = file_path\n                        \n                        \n                except Exception as e:\n                    mc.error(f\"Error reading json file: {e}\")\n        \n        return mapping\n        \n    def show(self):\n        \"\"\"Show the window.\"\"\"\n        self.close()\n        self.MainWindow = self.loadUIFile()\n        self.MainWindow.show()\n\n    def close(self):\n        \"\"\"Close the window.\"\"\"\n        if self.MainWindow is not None:\n            sys.path = [path for path in sys.path if path != dir_path]\n            self.MainWindow.close()\n            self.MainWindow = None\n            \n    def showProgressBar(self):\n        \"\"\"Show the progress bar.\"\"\"\n        self.ui.QExportProgressBar.setVisible(True)\n        QApplication.processEvents()\n        \n    def hideProgressBar(self):\n        \"\"\"Hide the progress bar.\"\"\"\n        self.ui.QExportProgressBar.setVisible(False)\n        QApplication.processEvents()\n        \n    def resetProgressBar(self):\n        \"\"\"Reset the progress bar value to 0.\"\"\"\n        self.ui.QExportProgressBar.setValue(0)\n        QApplication.processEvents()\n        \n    def update_progress(self, value, max_value = None):\n        if max_value is not None:\n            self.ui.QExportProgressBar.setMaximum(max_value)\n        self.ui.QExportProgressBar.setValue(value)\n        QApplication.processEvents()  # Ensure the UI updates immediately\n\ndef showWindow():\n    \"\"\"This is the entry point of the script. Create an instance of the Window class and show it.\"\"\"\n    global win\n    win = Window(ui_file)\n    win.show()\n\ndef FindRootJnt(jnt):\n    parent = mc.listRelatives(jnt, p=True)\n    if parent:\n        parent = parent[0]\n        return FindRootJnt(parent)\n    else:\n        return jnt\n        \ndef ReplaceCheck(meshes, directory):\n    \n    files_in_directory = os.listdir(directory)\n    \n    matching_files_substring = [file for file in files_in_directory if any(mesh in file for mesh in meshes)]\n    \n    replace_files = []\n    readable_only = []\n    export_all = []\n    \n    for file in matching_files_substring:\n        if not Is_Readable(os.path.join(directory, file)):\n            replace_files.append(os.path.splitext(file)[0])\n            export_all.append(os.path.splitext(file)[0])\n        else:\n            readable_only.append(os.path.splitext(file)[0])\n    \n    writable_meshes = [mesh for mesh in meshes if mesh not in readable_only]\n\n    if readable_only:\n        readable_matches = \"\\n\".join(readable_only)\n        mc.confirmDialog(title='Readable Only', message=f'These Files are set to Readable-Only. Make sure these files are checked-out in PV4.\\n\\n{readable_matches}', button=['OK'])\n        \n    if replace_files:\n        replace_matches = \"\\n\".join(replace_files)\n        confirmation = mc.confirmDialog(title='Replace Files?', message=f'Would you like to replace these files?\\n\\n{replace_matches}', button=['OK', 'Cancel'], defaultButton= 'OK', cancelButton = 'Cancel', dismissString='Cancel')\n        \n        if confirmation == 'OK':\n            return writable_meshes\n            \n        elif confirmation == 'Cancel':\n            non_replace_meshes = [mesh for mesh in writable_meshes if mesh not in replace_files]\n            return non_replace_meshes\n            \n    return meshes\n    \ndef Is_Readable(filepath):\n    file_stat = os.stat(filepath)\n    # Check if the file is read-only by comparing the mode\n    # A file is read-only if it is not writable by the owner, group, or others\n    return not (file_stat.st_mode & stat.S_IWUSR or file_stat.st_mode & stat.S_IWGRP or file_stat.st_mode & stat.S_IWOTH)   \n    \nshowWindow()\n\n\n" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Weld the B*tches (Copy vert weight paint on to target verts, first selection should be your source)" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "WTB" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "WTB" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "weightHammer.png" 
+        -image1 "weightHammer.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as cmd\nimport maya.mel as mel\n\ndef weldTheBitches():\n    verts = cmd.ls(fl = True, os = True)\n    cmd.select(verts[0])\n    mel.eval('artAttrSkinWeightCopy')\n    cmd.select(verts)\n    this = mel.eval('artAttrSkinWeightPaste')\n\tprint(this)\nweldTheBitches()" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "SK-J" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "SK-J" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "SK-J" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "pythonFamily.png" 
+        -image1 "pythonFamily.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as py\nimport maya.mel as mel\n\ndef checkSel(sel):\n    if len(sel) > 1:\n        raise Exception('More than one object was selected. Please select one Mesh. This was your selection: {}'.format(sel))\n        \ndef checkCluster(cluster, sel):\n    if not cluster:\n        raise Exception('This object has no skin cluster. This was your selection: {}'.format(sel))\n\ngetSel= py.ls(sl=True)\n\ncheckSel(getSel)\n\nmesh= getSel[0]\n\ngetSkinCluster= mel.eval('findRelatedSkinCluster '+mesh)\n\ncheckCluster(getSkinCluster, mesh)\njoints= py.skinCluster(getSkinCluster, query=True,inf=True)\n\npy.select(joints)\n\nif cmds.objExists('TEMP_FINDER_JNTS_set01') == True:\n    py.delete('TEMP_FINDER_JNTS_set01')\n\njntSet = py.sets(n='TEMP_FINDER_JNTS_set01')" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Select two objects to point and orient constraint with offset." 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "PandO" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "PandO" 
+        -overlayLabelColor 0.891534 0.891534 0.891534 
+        -overlayLabelBackColor 0.6428 0.2685 0.2685 0.5 
+        -image "constraint.png" 
+        -image1 "constraint.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as cmds\n\nsel = cmds.ls(sl=True)\n\nsrc = sel[0]\ntrg = sel[1]\n\ncmds.pointConstraint(src, trg, mo=True)\ncmds.orientConstraint(src,trg, mo=True)" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    separator
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -style "shelf" 
+        -horizontal 0
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Add a prefix to all hierarchy names" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Prefix Hierarchy Names..." 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "PHN" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "menuIconModify.png" 
+        -image1 "menuIconModify.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "PrefixHierarchyNames" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Rename objects in scene" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Search and Replace Names..." 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "SaRN" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "menuIconModify.png" 
+        -image1 "menuIconModify.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "SearchAndReplaceNames" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Game Exporter" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Game Exporter" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "GE" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "menuIconFile.png" 
+        -image1 "menuIconFile.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -version "2016" 
+        -command "gameFbxExporter" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    separator
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -style "shelf" 
+        -horizontal 0
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Select all descendant joints based on a selection. " 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Sel_J" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "Sel_J" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "parent.png" 
+        -image1 "parent.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as cmds\n\ndef select_children_joints():\n    \"\"\"Expands the selection to include all child joints of the selected objects.\"\"\"\n    \n    # Get the current selection\n    selected = cmds.ls(selection=True)\n\n    if not selected:\n        cmds.warning(\"Please select at least one object.\")\n        return\n\n    all_joints = []\n\n    # Iterate through each selected object\n    for obj in selected:\n        # Get all descendant joints\n        child_joints = cmds.listRelatives(obj, allDescendents=True, type=\"joint\", fullPath=True) or []\n        all_joints.extend(child_joints)\n\n    # Add the original selection to the final list\n    all_joints.extend(selected)\n\n    # Remove duplicates and select everything\n    all_joints = list(set(all_joints))\n    cmds.select(all_joints, replace=True)\n\n    print(f\"Selection expanded to {len(all_joints)} joints.\")\n\n# Run the function\nselect_children_joints()\n" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Select all descendant locators based on a selection. " 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Sel_Lc" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "Sel_Lc" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "pythonFamily.png" 
+        -image1 "pythonFamily.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as cmds\n\ndef select_children_joints():\n    \"\"\"Expands the selection to include all child joints of the selected objects.\"\"\"\n    \n    # Get the current selection\n    selected = cmds.ls(selection=True)\n\n    if not selected:\n        cmds.warning(\"Please select at least one object.\")\n        return\n\n    all_locators = []\n\n    # Iterate through each selected object\n    for obj in selected:\n        # Get all descendant joints\n        locators = cmds.listRelatives(obj, allDescendents=True, type=\"locator\", fullPath=True) or []\n        for loc in locators:\n            locater_transform = cmds.listRelatives(loc, parent= True)[0] or []\n            all_locators.append(locater_transform)\n\n    # Add the original selection to the final list\n    all_locators.extend(selected)\n\n    # Remove duplicates and select everything\n    cmds.select(all_locators, replace=True)\n\n\n# Run the function\nselect_children_joints()" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "import maya.cmds as cmds\n\ndef select_children_meshes():\n    \"\"\"Expands the selection to include all child mesh transform nodes of the selected objects.\"\"\"\n\n    selected = cmds.ls(selection=True)\n\n    if not selected:\n        cmds.warning(\"Please select at least one object.\")\n        return\n\n    all_mesh_transforms = []\n\n    for obj in selected:\n        # Find all descendant mesh shapes\n        mesh_shapes = cmds.listRelatives(obj, allDescendents=True, type=\"mesh\", fullPath=True) or []\n\n        for mesh in mesh_shapes:\n            # Get the parent transform of the mesh shape\n            mesh_transform = cmds.listRelatives(mesh, parent=True, fullPath=True)[0]\n            all_mesh_transforms.append(mesh_transform)\n\n    # Add original selection and remove duplicates\n    all_mesh_transforms.extend(selected)\n    unique_selection = list(set(all_mesh_transforms))\n\n    # Select the final list\n    cmds.select(unique_selection, replace=True)\n\n# Run it\nselect_children_meshes()\n" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Sel_Msh" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "Sel_Msh" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "pythonFamily.png" 
+        -image1 "pythonFamily.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as cmds\n\ndef select_children_meshes():\n    \"\"\"Expands the selection to include all child mesh transform nodes of the selected objects.\"\"\"\n\n    selected = cmds.ls(selection=True)\n\n    if not selected:\n        cmds.warning(\"Please select at least one object.\")\n        return\n\n    all_mesh_transforms = []\n\n    for obj in selected:\n        # Find all descendant mesh shapes\n        mesh_shapes = cmds.listRelatives(obj, allDescendents=True, type=\"mesh\", fullPath=True) or []\n\n        for mesh in mesh_shapes:\n            # Get the parent transform of the mesh shape\n            mesh_transform = cmds.listRelatives(mesh, parent=True, fullPath=True)[0]\n            all_mesh_transforms.append(mesh_transform)\n\n    # Add original selection and remove duplicates\n    all_mesh_transforms.extend(selected)\n    unique_selection = list(set(all_mesh_transforms))\n\n    # Select the final list\n    cmds.select(unique_selection, replace=True)\n\n# Run it\nselect_children_meshes()\n" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Select hierarchy" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Hierarchy" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "Hier" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "menuIconSelect.png" 
+        -image1 "menuIconSelect.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "SelectHierarchy" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Toggle local rotation axis visibility" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Local Rotation Axes" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "LRA" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "menuIconDisplay.png" 
+        -image1 "menuIconDisplay.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "ToggleLocalRotationAxes" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Hide all Local Rotation Axes." 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "LRA_OFF" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "LRA_O" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "SP_MessageBoxCritical.png" 
+        -image1 "SP_MessageBoxCritical.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as cmds\n\ndef disable_local_rotation_axes():\n    \"\"\"\n    Iterates through all transform nodes in the scene and turns off their\n    local rotation axis display.\n    \"\"\"\n    # List all transform nodes in the scene.\n    transforms = cmds.ls(type=\"transform\")\n    \n    for transform in transforms:\n        # Check if the transform node has the 'displayLocalAxis' attribute.\n        if cmds.attributeQuery(\"displayLocalAxis\", node=transform, exists=True):\n            try:\n                # Turn off the local rotation axis display (0 means off).\n                cmds.setAttr(f\"{transform}.displayLocalAxis\", 0)\n            except Exception as e:\n                cmds.warning(f\"Failed to set attribute on {transform}: {e}\")\n    \n    print(\"Local rotation axes have been disabled for all transform nodes.\")\n\n# Run the function.\ndisable_local_rotation_axes()\n" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    separator
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -style "shelf" 
+        -horizontal 0
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Display and edit relationships among nodes of the scene" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Node Editor" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "NE" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "menuIconWindow.png" 
+        -image1 "menuIconWindow.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "NodeEditorWindow" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Make connections between object attributes" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Connection Editor" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "CE" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "menuIconWindow.png" 
+        -image1 "menuIconWindow.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "ConnectionEditor" 
+        -sourceType "mel" 
+        -doubleClickCommand "print(\"User defined menuItem\");" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Edit various component values for the selected object(s)" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Component Editor" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "CpEd" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "menuIconWindow.png" 
+        -image1 "menuIconWindow.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "ComponentEditor" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    separator
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -style "shelf" 
+        -horizontal 0
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Delete By Type: History" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Delete By Type: History" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "DeleteHistory.png" 
+        -image1 "DeleteHistory.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "DeleteHistory" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Freeze Transformations" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Freeze Transformations" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "FreezeTransform.png" 
+        -image1 "FreezeTransform.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "FreezeTransformations" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Resets the selected object's pivot to center" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Center Pivot" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "CP" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "menuIconModify.png" 
+        -image1 "menuIconModify.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "CenterPivot" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Opens the Graph Editor, a tool for editing animation curves" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Graph Editor" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "animCurveTA.svg" 
+        -image1 "animCurveTA.svg" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -version "2017" 
+        -command "GraphEditor" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Select the source root object of heir that has keys, then select the target object root object of heir, then run. This goes off of name case. So if names match it will copy keys over." 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Copy_Anim" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "Copy_Anim" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "copySkinWeight.png" 
+        -image1 "copySkinWeight.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as cmds\nimport re\n\n# ----------------------------\n# Helpers\n# ----------------------------\n\ndef has_parent(root):\n    parent = cmds.listRelatives(root, parent=True)\n    if parent:\n        raise ValueError(\"Please select root objects only (source, then target).\")\n\ndef get_transform_objects(root):\n    \"\"\"Return ALL non-locator transform descendants as FULL DAG paths.\"\"\"\n    all_transforms = cmds.listRelatives(root, ad=True, type='transform', fullPath=True) or []\n    clean_transforms = []\n    for t in all_transforms:\n        shapes = cmds.listRelatives(t, shapes=True, fullPath=True) or []\n        is_locator = any(cmds.objectType(s) == 'locator' for s in shapes)\n        if not is_locator:\n            clean_transforms.append(t)\n    return clean_transforms\n\ndef dag_depth(path):\n    \"\"\"Depth based on number of '|' in full path. Root has depth 0 or 1 depending on naming.\"\"\"\n    return path.count('|')\n\ndef get_final_token(name, strip_trailing_digits=True):\n    \"\"\"\n    Extract the final meaningful token of a node name:\n    - use full DAG path's last component\n    - strip namespace\n    - lower-case\n    - optionally drop trailing digits (e.g., 'head1' -> 'head')\n    \"\"\"\n    short = name.split('|')[-1]              # last path segment\n    short = short.split(':')[-1]             # strip namespace\n    if strip_trailing_digits:\n        short = re.sub(r'\\d+$', '', short)   # drop trailing digits\n    return short.lower()\n\ndef bucket_by_token(nodes, strip_trailing_digits=True):\n    \"\"\"Map token -> list of full DAG paths with that token.\"\"\"\n    buckets = {}\n    for n in nodes:\n        tok = get_final_token(n, strip_trailing_digits=strip_trailing_digits)\n        buckets.setdefault(tok, []).append(n)\n    return buckets\n\ndef pair_by_depth(source_list, target_list):\n    \"\"\"\n    Deterministically pair multiple source/target nodes sharing the same token.\n    Sort both lists by DAG depth (shallow->deep) and pair in order.\n    \"\"\"\n    s_sorted = sorted(source_list, key=dag_depth)\n    t_sorted = sorted(target_list, key=dag_depth)\n    return list(zip(s_sorted, t_sorted))\n\n# ----------------------------\n# Core: Key transfer\n# ----------------------------\n\ndef match_string_and_keyframes(source_nodes, target_nodes, strip_trailing_digits=True):\n    \"\"\"\n    Copy keyed TR/RO values from source -> target for nodes whose final tokens match.\n    Uses full DAG paths to avoid 'More than one object matches name' errors.\n    If multiple nodes share the same token on both sides:\n      - If counts match, pair deterministically by DAG depth.\n      - If counts differ, skip the token with a warning.\n    \"\"\"\n    print('Matching keys...')\n    s_b = bucket_by_token(source_nodes, strip_trailing_digits=strip_trailing_digits)\n    t_b = bucket_by_token(target_nodes, strip_trailing_digits=strip_trailing_digits)\n\n    common = sorted(set(s_b.keys()) & set(t_b.keys()))\n    if not common:\n        print(\"No matching pairs found.\")\n        return\n\n    print(\"Common tokens:\", common)\n\n    attrs = ['translateX', 'translateY', 'translateZ',\n             'rotateX', 'rotateY', 'rotateZ']\n\n    for tok in common:\n        s_list = s_b[tok]\n        t_list = t_b[tok]\n\n        if len(s_list) == 1 and len(t_list) == 1:\n            pairs = [(s_list[0], t_list[0])]\n        elif len(s_list) == len(t_list):\n            pairs = pair_by_depth(s_list, t_list)\n            print(f'Info: token \"{tok}\" has {len(s_list)} matches; pairing by DAG depth.')\n        else:\n            print(f'Warning: token \"{tok}\" has {len(s_list)} source vs {len(t_list)} target matches. Skipping to avoid ambiguity.')\n            continue\n\n        for src, trg in pairs:\n            print(f'Match: {src}  ->  {trg}  [token: {tok}]')\n\n            for attr in attrs:\n                key_count = cmds.keyframe(f'{src}.{attr}', query=True, keyframeCount=True)\n                if not key_count:\n                    continue\n\n                key_times = cmds.keyframe(f'{src}.{attr}', query=True) or []\n                for t in key_times:\n                    cmds.currentTime(t, edit=True)\n\n                    if 'translate' in attr:\n                        src_w_t = cmds.xform(src, q=True, ws=True, t=True)\n                        trg_w_t = cmds.xform(trg, q=True, ws=True, t=True)\n                        if 'translateX' in attr:\n                            cmds.xform(trg, ws=True, t=[src_w_t[0], trg_w_t[1], trg_w_t[2]])\n                        elif 'translateY' in attr:\n                            cmds.xform(trg, ws=True, t=[trg_w_t[0], src_w_t[1], trg_w_t[2]])\n                        elif 'translateZ' in attr:\n                            cmds.xform(trg, ws=True, t=[trg_w_t[0], trg_w_t[1], src_w_t[2]])\n                        cmds.setKeyframe(trg, at=attr)\n\n                    elif 'rotate' in attr:\n                        src_w_r = cmds.xform(src, q=True, ws=True, ro=True)\n                        trg_w_r = cmds.xform(trg, q=True, ws=True, ro=True)\n                        if 'rotateX' in attr:\n                            cmds.xform(trg, ws=True, ro=[src_w_r[0], trg_w_r[1], trg_w_r[2]])\n                        elif 'rotateY' in attr:\n                            cmds.xform(trg, ws=True, ro=[trg_w_r[0], src_w_r[1], trg_w_r[2]])\n                        elif 'rotateZ' in attr:\n                            cmds.xform(trg, ws=True, ro=[trg_w_r[0], trg_w_r[1], src_w_r[2]])\n                        cmds.setKeyframe(trg, at=attr)\n\n# ----------------------------\n# Entry point\n# ----------------------------\n\ndef run_transfer(strip_trailing_digits=True):\n    sel = cmds.ls(sl=True, long=True) or []\n    if len(sel) != 2:\n        raise ValueError(\"Please select exactly two root objects: source then target.\")\n\n    source_root, target_root = sel\n\n    has_parent(source_root)\n    has_parent(target_root)\n\n    # Ensure full DAG paths for roots\n    source_root_fp = cmds.ls(source_root, long=True)[0]\n    target_root_fp = cmds.ls(target_root, long=True)[0]\n\n    source_list = [source_root_fp] + get_transform_objects(source_root_fp)\n    target_list = [target_root_fp] + get_transform_objects(target_root_fp)\n\n    match_string_and_keyframes(source_list, target_list, strip_trailing_digits=strip_trailing_digits)\n\n# Example usage:\n# Select source root, then target root, then run:\nrun_transfer(strip_trailing_digits=True)\n" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "This will reassign materials of selected objects to correct material (WIP - assigns based on suffix of hardcoded number)" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Re_Mat" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "Re_Mat" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "pythonFamily.png" 
+        -image1 "pythonFamily.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as cmds\n\ndef select_faces_by_material(material_name):\n    \"\"\"\n    Returns all mesh faces assigned to the given material.\n    \"\"\"\n    if not cmds.objExists(material_name):\n        return []\n\n    faces = []\n    shading_engines = cmds.listConnections(material_name, type=\"shadingEngine\") or []\n    for sg in shading_engines:\n        members = cmds.sets(sg, query=True) or []\n        faces.extend(members)\n\n    return faces\n\n\ndef reassign_material_without_1(materials):\n    \"\"\"\n    If a material ends with '1', reassign all faces using it to the version without '1'.\n    \"\"\"\n\t#TODO: Need to make this more robust, instead of hardcoding '1' do a fnmatch with wild cards.\n    for mat in materials:\n        if mat.endswith(\"2\"):\n            base_mat = mat[:-1]\n\n            if cmds.objExists(base_mat):\n                faces = select_faces_by_material(mat)\n                if faces:\n                    print(f\"Reassigning {len(faces)} faces from '{mat}' to '{base_mat}'\")\n                    cmds.select(faces, replace=True)\n                    cmds.hyperShade(assign=base_mat)\n                    cmds.select(clear=True)\n                else:\n                    print(f\"No faces found using material '{mat}'\")\n            else:\n                print(f\"?? No matching material found for: '{base_mat}'\")\n\n    print(\"? Material reassignment complete.\")\n\n\n# --- Entry Point ---\nmeshes = cmds.ls(selection=True, dag=True, type=\"mesh\", long=True)\nif not meshes:\n    cmds.warning(\"Please select at least one mesh object.\")\nelse:\n    for mesh in meshes:\n        shading_engines = cmds.listConnections(mesh, type=\"shadingEngine\") or []\n        for sg in shading_engines:\n            materials = cmds.ls(cmds.listConnections(f\"{sg}.surfaceShader\"), materials=True) or []\n            reassign_material_without_1(materials)\n" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "First select source object, then your target object and copys name to the target object. (This will delete your first object.)" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "RN_Obj" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "RN_Obj" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "pythonFamily.png" 
+        -image1 "pythonFamily.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import pymel.core as pm\n\ndef replace_and_rename():\n    sel = pm.ls(selection=True)\n    \n    if len(sel) != 2:\n        pm.warning(\"Please select exactly 2 objects.\")\n        return\n\n    original_name = sel[0].name()\n    to_rename = sel[1]\n\n    # Delete the first selected object\n    try:\n        pm.delete(sel[0])\n    except RuntimeError as e:\n        pm.warning(f\"Could not delete first object: {e}\")\n        return\n\n    # Make sure the name isn't taken after delete\n    if pm.objExists(original_name):\n        pm.warning(f\"Name '{original_name}' is still taken. Renaming skipped.\")\n        return\n\n    # Rename second object to the original name\n    try:\n        pm.rename(to_rename, original_name)\n    except RuntimeError as e:\n        pm.warning(f\"Could not rename second object: {e}\")\n\n    print(f\"Deleted first object and renamed second to '{original_name}'.\")\n\n# Run it:\nreplace_and_rename()\n" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Finds all ngSkinToolsData nodes and deletes them." 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "DEL_NG" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "DEL_NG" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "pythonFamily.png" 
+        -image1 "pythonFamily.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as cmds\n\n# List all nodes in the scene\nall_nodes = cmds.ls()\n\n# Filter nodes containing 'ngSkinToolsData' in their names\nngskin_nodes = [node for node in all_nodes if 'ngSkinToolsData' in node]\n\n# Delete matching nodes\nif ngskin_nodes:\n    cmds.delete(ngskin_nodes)\n    print(\"Deleted nodes:\", ngskin_nodes)\nelse:\n    print(\"No matching ngSkinToolsData nodes found.\")\n" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "import maya.cmds as cmds\n\nsel = cmds.ls(sl=True)[0]\ncmds.group(sel, n= f'{sel}_NULL', r= True)" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "group" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "group" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "group.png" 
+        -image1 "group.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.cmds as cmds\n\nsel = cmds.ls(sl=True)[0]\ncmds.group(sel, n= f'{sel}_NULL', r= True)" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Harden edges based on face angle." 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Harden Edge" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "polyHardEdge.png" 
+        -image1 "polyHardEdge.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "PolygonHardenEdge" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Soften edges based on face angle." 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Soften Edge" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "polySoftEdge.png" 
+        -image1 "polySoftEdge.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "PolygonSoftenEdge" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Lock the Vertex normals" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Lock Normals" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "polyNormalLock.png" 
+        -image1 "polyNormalLock.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "LockNormals" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Unlock the Vertex normals" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Unlock Normals" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "polyNormalUnlock.png" 
+        -image1 "polyNormalUnlock.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "UnlockNormals" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Prints out the number of normals." 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "NOR_#" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "NOR_#" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "normalDetails.svg" 
+        -image1 "normalDetails.svg" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "import maya.api.OpenMaya as om\nimport maya.cmds as cmds\n\ndef get_vertex_normal_count(mesh_name=None):\n    # Use selected mesh if none provided\n    if not mesh_name:\n        sel = cmds.ls(selection=True, dag=True, type='mesh')\n        if not sel:\n            cmds.error(\"Please select a mesh.\")\n        mesh_name = sel[0]\n\n    # Get the MObject of the mesh\n    sel_list = om.MSelectionList()\n    sel_list.add(mesh_name)\n    dag_path = sel_list.getDagPath(0)\n\n    mesh_fn = om.MFnMesh(dag_path)\n\n    # Get normal count — this will return the number of **per-vertex-per-face** normals\n    normals = mesh_fn.getNormals()\n    normal_count = len(normals)\n\n    print(f\"{mesh_name} has {normal_count} vertex normals.\")\n    return normal_count\n\n# Example use:\nget_vertex_normal_count()" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Select or remove unwanted artifacts on a polygon surface." 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Cleanup..." 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "polyCleanup.png" 
+        -image1 "polyCleanup.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "expandPolyGroupSelection; polyCleanupArgList 4 { \"0\",\"2\",\"1\",\"0\",\"1\",\"0\",\"1\",\"0\",\"0\",\"1e-05\",\"0\",\"1e-05\",\"0\",\"1e-05\",\"0\",\"1\",\"0\",\"0\" };" 
+        -sourceType "mel" 
+        -doubleClickCommand "performPolyCleanup 1" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Create a new scene" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "New Scene" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "NS" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "menuIconFile.png" 
+        -image1 "menuIconFile.png" 
+        -style "iconOnly" 
+        -marginWidth 0
+        -marginHeight 1
+        -command "NewScene" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+
+} 
