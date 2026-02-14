@@ -3,19 +3,22 @@ import maya.mel as mel
 import maya.cmds as cmds
 import traceback
 
-PIPE_PATH = r"C:\Users\v-adespain\Documents\GitHub\ds_studio_pip\maya\python"
-SHELF_PATH = PIPE_PATH + r"\shelves\shelf_DS.mel"
-
-if PIPE_PATH not in sys.path:
-    sys.path.append(PIPE_PATH)
-
-#def load_shelves():
-    #mel_path = SHELF_PATH.replace("\\", "/")
-    #maya.utils.executeDeferred(lambda: mel.eval(f'source "{mel_path}"')) #currently doesnt work.
-
 def load_pipe_tools():
 
-    cmds.warning("Attempting to load the DS_Studio pipline...")
+    PIPE_PATH = r"C:\Users\v-adespain\Documents\GitHub\ds_studio_pip\maya\python"
+    SHELF_PATH = PIPE_PATH + r"\shelves\shelf_DS.mel"
+
+    if os.path.exists(PIPE_PATH) == False:
+        PIPE_PATH = r"C:\Users\andre\Documents\maya\DS_STUDIO\ds_studio_pip\maya\python"
+        if os.path.exists(PIPE_PATH) == False:
+            raise ValueError(f"The pathing to DS_STUDIO pipeline, does not exist. {PIPE_PATH}")
+        
+    print(f"DS_STUDIO pipeline pathing exists ... Loading {PIPE_PATH}")
+
+    if PIPE_PATH not in sys.path:
+        sys.path.append(PIPE_PATH)
+
+    cmds.warning("Attempting to load the DS_Studio pipeline...")
 
     try:
         import pipe
