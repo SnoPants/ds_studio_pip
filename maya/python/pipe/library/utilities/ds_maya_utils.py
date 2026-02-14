@@ -1,5 +1,5 @@
 import maya.cmds as cmds
-from library.utilities.validate.ds_validate import validate_chain
+from pipe.library.utilities.validate.ds_validate import validate_chain
 
 def get_selected_joints_hier(chain, start, end):
 

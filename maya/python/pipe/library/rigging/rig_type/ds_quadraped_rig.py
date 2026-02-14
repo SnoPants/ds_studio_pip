@@ -1,4 +1,4 @@
-from library.rigging.ds_rig import Rig
+from pipe.library.rigging.ds_rig import Rig
 
 class Quadraped_Rig(Rig):
     def __init__(self, name):

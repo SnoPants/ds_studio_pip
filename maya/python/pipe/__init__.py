@@ -1,13 +1,51 @@
-# Dynamically import every file in the package, TODO: Need to search through the rest of the packages and load it.
+# pipe/__init__.py
 
-from os.path import dirname, basename, isfile, join
+import traceback
+import maya.utils
+
+try:
+    # Core Maya
+    import maya.cmds as cmds
+
+    # Rigging
+    from pipe.library.rigging import ds_rig
+    from pipe.library.rigging.rig_type import ds_biped_rig as biped
+    from pipe.library.rigging.rig_type.builders import ds_biped_limb_builder as limb
+    from pipe.library.rigging.rig_type.builders import ds_controller_builder as ctrl
+
+    # Utilities
+    from pipe.library.utilities import ds_maya_math as math
+    from pipe.library.utilities import ds_maya_utils as utils
+
+    __all__ = [
+        "cmds",
+        "ds_rig",
+        "biped",
+        "limb",
+        "ctrl",
+        "math",
+        "utils",
+    ]
+
+    print(f"Successfully imported: {__all__}")
+
+except Exception as e:
+    tb = traceback.format_exc()
+    try:
+        import maya.cmds as cmds
+        maya.utils.executeInMainThreadWithResult(cmds.error, f"Failed to load DS Studio tools: {e}\n{tb}")
+    except Exception:
+        # last resort: print to script editor
+        print(f"Failed to load DS Studio tools: {e}\n{tb}")
+
+'''from os.path import dirname, basename, isfile, join
 import glob
 import importlib
 import maya.cmds as cmds
 
 _pack_dir = dirname(__file__)
 
-_files = glob.glob(join(_pack_dir, "**", "*.py"), recursive= True)
+_files = ['']
 
 __all__ = []
 for fil in _files:
@@ -33,7 +71,7 @@ for mod in __all__:
     # I think instead dynamically importing everything in, we might just want to do this by hand, just for the sake of doing "import.this.module as xyz"
     # or we add a init file to every folder and import them in that way with ....
 
-    '''
+
     from os.path import dirname, basename, isfile, join 
     import glob 
     modules = glob.glob(join(dirname(__file__), "**", "*.py"), recursive= True) 

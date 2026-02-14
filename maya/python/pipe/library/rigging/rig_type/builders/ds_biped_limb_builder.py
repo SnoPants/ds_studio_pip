@@ -1,12 +1,12 @@
 from functools import singledispatch
 
 import maya.cmds as cmds
-from library.rigging.ds_rig import Builder
-from library.utilities.ds_maya_math import dot_product_pv, get_scale_by_distance
-from library.utilities.ds_maya_utils import get_selected_joints_hier
-from library.utilities.ds_maya_mtx_constraints import *
-from library.utilities.validate.ds_validate import validate_chain
-from library.rigging.rig_type.builders.ds_controller_builder import RigCtrl
+from pipe.library.rigging.ds_rig import Builder
+from pipe.library.utilities.ds_maya_math import dot_product_pv, get_scale_by_distance
+from pipe.library.utilities.ds_maya_utils import get_selected_joints_hier
+from pipe.library.utilities.ds_maya_mtx_constraints import *
+from pipe.library.utilities.validate.ds_validate import validate_chain
+from pipe.library.rigging.rig_type.builders.ds_controller_builder import RigCtrl
 
 class BipedLimbBuilder(Builder):
     def __init__(self, name, start_joint, end_joint, sc_joint):

@@ -2,7 +2,7 @@ import maya.cmds as cmds
 import math
 import maya.api.OpenMaya as om
 from decimal import *
-from library.rigging.rig_type.builders.ds_controller_builder import RigCtrl
+from pipe.library.rigging.rig_type.builders.ds_controller_builder import RigCtrl
 
 
 

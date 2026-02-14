@@ -1,5 +1,5 @@
 import maya.cmds as cmds
-from library.utilities.validate import ds_validate
+from pipe.library.utilities.validate import ds_validate
 print("From rigging module - ds_rig.py loaded")
 
 #### Base Rig class

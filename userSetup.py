@@ -3,7 +3,7 @@ import maya.mel as mel
 import maya.cmds as cmds
 import traceback
 
-PIPE_PATH = r"C:\Users\andre\Documents\maya\DS_STUDIO\maya\python"
+PIPE_PATH = r"C:\Users\v-adespain\Documents\GitHub\ds_studio_pip\maya\python"
 SHELF_PATH = PIPE_PATH + r"\shelves\shelf_DS.mel"
 
 if PIPE_PATH not in sys.path:

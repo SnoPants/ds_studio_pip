@@ -1,6 +1,6 @@
-from library.rigging.ds_rig import Rig
-from library.utilities.validate import ds_validate
-from library.rigging.rig_type.builders.ds_biped_limb_builder import BipedLimbBuilder
+from pipe.library.rigging.ds_rig import Rig
+from pipe.library.utilities.validate import ds_validate
+from pipe.library.rigging.rig_type.builders.ds_biped_limb_builder import BipedLimbBuilder
 
 ### Biped Rig class inheriting from the base Rig class.
 class Biped_Rig(Rig):

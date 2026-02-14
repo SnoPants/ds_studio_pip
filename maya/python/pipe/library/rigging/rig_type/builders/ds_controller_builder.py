@@ -8,11 +8,17 @@ class RigCtrl:
         self.rotation = rotation
         self.color = None
         self.shape = None
-        self.type_tag = None
 
     def _create_ctrl(self):
         print("creating ctrl")
-        self.type_tag = 'rig_ctrl'
+
+    # Left off here. (Below) - need to add the shape creation and color assignment.
+    #TODO: Need to create a JSON or set of py files containing the shape data for the various control types. This will allow us to easily create different types of controls based on the shape data.
+
+    def _create_nurbs_shape(self):
+        #temp shape creation. Need to replace with actual shape data.
+        shape = cmds.circle(n= f"{self.name}_circle_01", normal=[0, 1, 0], radius=1)[0]
+
 
     def _create_loc(self):
         loc = cmds.spaceLocator(n= f"{self.name}_loc_01")
@@ -21,18 +27,25 @@ class RigCtrl:
         cmds.setAttr(f"{loc[0]}.localScaleX", 45 + self.scale)
         cmds.setAttr(f"{loc[0]}.localScaleY", 45 + self.scale)
         cmds.setAttr(f"{loc[0]}.localScaleZ", 45 + self.scale)
-        self.type_tag = 'temp_ctrl'
         cmds.xform(loc_grp , ws =1 , t= (self.translate[0] , self.translate[1] ,self.translate[2]))
         cmds.xform(loc_grp , ws =1 , ro= (self.rotation[0] , self.rotation[1] ,self.rotation[2]))
 
         return loc[0], loc_grp
 
-        # Left off here. (Below) - need to add the shape creation and color assignment.
-
-    def _get_shape(self, shape):
+    def _set_color_shape(self, shape):
         return
 
-    def _replace_ctrl(self, trg):
-        return
+    def replace_with_new_nurbs(self):
+        selected = cmds.ls(sl=True)
+        for trg in selected:
+            ctrl_scale = cmds.getAttr(f'{trg}.localScaleX')
 
+            cmds.setAttr(f"{shape}.scaleX", ctrl_scale)
+            cmds.setAttr(f"{shape}.scaleY", ctrl_scale)
+            cmds.setAttr(f"{shape}.scaleZ", ctrl_scale)
+
+            shape = self._create_nurbs_shape()
+            cmds.parent(shape, trg, s=True, r=True)
+            cmds.delete(trg + 'Shape')
+            return
 
