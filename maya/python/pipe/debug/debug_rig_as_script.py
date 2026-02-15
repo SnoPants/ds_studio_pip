@@ -42,12 +42,13 @@ except Exception as e:
 #-----
 
 import pipe
-sel = pipe.cmds.ls(sl=True)
 
+# Testing Limb Rig
+sel = pipe.cmds.ls(sl=True)
 This_Rig = pipe.biped.Biped_Rig("This_Rig")
 This_Rig.limb_biped("R_Brute_Arm", sel[0], sel[1], sel[2])
 
-ctrl.replace_with_new_nurbs()
-
-#-----
-
+# Testing Ctrl
+sel_ctrl = pipe.cmds.ls(sl=True)
+loc = pipe.ctrl.RigCtrl()
+newctrl = loc.replace_with_new_nurbs(sel_ctrl)

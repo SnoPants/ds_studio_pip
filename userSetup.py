@@ -4,7 +4,7 @@ import maya.cmds as cmds
 import traceback
 
 def load_pipe_tools():
-
+# --- Going to have to change this eventually to dynamically find where this is installed
     PIPE_PATH = r"C:\Users\v-adespain\Documents\GitHub\ds_studio_pip\maya\python"
     SHELF_PATH = PIPE_PATH + r"\shelves\shelf_DS.mel"
 
@@ -13,7 +13,9 @@ def load_pipe_tools():
         if os.path.exists(PIPE_PATH) == False:
             raise ValueError(f"The pathing to DS_STUDIO pipeline, does not exist. {PIPE_PATH}")
         
-    print(f"DS_STUDIO pipeline pathing exists ... Loading {PIPE_PATH}")
+    print("DS_STUDIO pipeline pathing exists ...")
+
+# ---
 
     if PIPE_PATH not in sys.path:
         sys.path.append(PIPE_PATH)

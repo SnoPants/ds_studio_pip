@@ -7,6 +7,10 @@ try:
     # Core Maya
     import maya.cmds as cmds
 
+    # DS maya menu
+    from pipe import ds_menus
+    ds_menus.create_ds_menu()
+
     # Rigging
     from pipe.library.rigging import ds_rig
     from pipe.library.rigging.rig_type import ds_biped_rig as biped

@@ -1,7 +1,9 @@
 import maya.cmds as cmds
 
+# need to figure out a better algorithm for scaling based on distance
+
 class RigCtrl:
-    def __init__(self, name, scale= 1.0, translate=[0,0,0], rotation=[0,0,0]):
+    def __init__(self, name = None, scale= 1.0, translate=[0,0,0], rotation=[0,0,0]):
         self.name = name
         self.scale = scale
         self.translate = translate
@@ -17,8 +19,9 @@ class RigCtrl:
 
     def _create_nurbs_shape(self):
         #temp shape creation. Need to replace with actual shape data.
-        shape = cmds.circle(n= f"{self.name}_circle_01", normal=[0, 1, 0], radius=1)[0]
-
+        nurbs = cmds.circle(n= f"{self.name}_circle_01", normal=[0, 1, 0], radius=1)[0]
+        shapes = shape = cmds.listRelatives(nurbs, shapes=True)
+        return shapes
 
     def _create_loc(self):
         loc = cmds.spaceLocator(n= f"{self.name}_loc_01")
@@ -35,17 +38,20 @@ class RigCtrl:
     def _set_color_shape(self, shape):
         return
 
-    def replace_with_new_nurbs(self):
-        selected = cmds.ls(sl=True)
-        for trg in selected:
-            ctrl_scale = cmds.getAttr(f'{trg}.localScaleX')
+    def replace_with_new_nurbs(self, targets):
 
-            cmds.setAttr(f"{shape}.scaleX", ctrl_scale)
-            cmds.setAttr(f"{shape}.scaleY", ctrl_scale)
-            cmds.setAttr(f"{shape}.scaleZ", ctrl_scale)
+        # TODO: Need to figure out scaling here.
 
-            shape = self._create_nurbs_shape()
-            cmds.parent(shape, trg, s=True, r=True)
-            cmds.delete(trg + 'Shape')
+        for trg in targets:
+            trg_shape = cmds.listRelatives(trg, shapes=True)
+            #ctrl_scale = cmds.getAttr(f'{trg}.localScaleX')
+            new_shapes = self._create_nurbs_shape()
+
+            #cmds.setAttr(f"{shape}.scaleX", ctrl_scale)
+            #cmds.setAttr(f"{shape}.scaleY", ctrl_scale)
+            #cmds.setAttr(f"{shape}.scaleZ", ctrl_scale)
+            for shape in new_shapes:
+                cmds.parent(shape, trg, s=True, r=True)
+            
+            cmds.delete(trg_shape)
             return
-
