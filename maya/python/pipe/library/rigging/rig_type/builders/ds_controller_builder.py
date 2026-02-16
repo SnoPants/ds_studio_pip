@@ -1,4 +1,6 @@
 import maya.cmds as cmds
+import os
+import json
 
 # need to figure out a better algorithm for scaling based on distance
 
@@ -19,7 +21,13 @@ class RigCtrl:
 
     def _create_nurbs_shape(self):
         #temp shape creation. Need to replace with actual shape data.
-        nurbs = cmds.circle(n= f"{self.name}_circle_01", normal=[0, 1, 0], radius=1)[0]
+
+        json_path = os.path.join(os.path.dirname(__file__), "ds_nurbs_curves.json")
+
+        with open(json_path, "r") as f:
+            _SHAPE_DATA = json.load(f)
+
+        # left off here. need to create curve based on _SHAPE_DATA
         shapes = shape = cmds.listRelatives(nurbs, shapes=True)
         return shapes
 
