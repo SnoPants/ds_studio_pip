@@ -1,7 +1,8 @@
 {
   "version": 1,
   "units": "cm",
-  "shapes": {
+  "controls": {
+
     "sphere": {
       "type": "multiCurve",
       "curves": [
@@ -61,5 +62,8 @@
         }
       ]
     }
+
+
+    
   }
 }

@@ -51,4 +51,6 @@ This_Rig.limb_biped("R_Brute_Arm", sel[0], sel[1], sel[2])
 # Testing Ctrl
 sel_ctrl = pipe.cmds.ls(sl=True)
 loc = pipe.ctrl.RigCtrl()
+loc.shape = 'sphere'
+#loc.name = 'test'
 newctrl = loc.replace_with_new_nurbs(sel_ctrl)
