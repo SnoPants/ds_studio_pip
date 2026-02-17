@@ -32,11 +32,12 @@ class RigCtrl:
             return _NURBS_DATA
         
         data = _load_nurbs_data()
+        #  Debug for json loading
         print(data)
         print('nurbs controls: ', data["controls"]["sphere"])
 
         if self.shape not in data["controls"]:
-            raise ValueError(f"Shape '{self.shape}' not found in nurbs data.")
+            raise ValueError(f"Shape '{self.shape}' not found in nurbs data.") # circle is not working.
         
         shape_data = data["controls"][self.shape]
         print(self.shape)
