@@ -426,5 +426,17 @@
       ]
     }
     
+  },
+
+  "colors": {
+    "red":4,
+    "blue":15,
+    "yellow":22,
+    "green":26,
+    "peach":20,
+    "orange":21,
+    "teal":23,
+    "pink":31,
+    "purple":30
   }
 }
