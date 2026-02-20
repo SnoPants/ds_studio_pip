@@ -70,6 +70,17 @@ class RigCtrl:
         cmds.xform(loc_grp , ws =1 , ro= (self.rotation[0] , self.rotation[1] ,self.rotation[2]))
 
         return loc[0], loc_grp
+    
+    def create_ctrl(self, shape="circle", color=None):
+        self.shape = shape
+        self.color = color
+        
+        ctrl = self._create_nurbs_ctrl()
+
+        if color:
+            self._set_color_shape(ctrl)
+
+        return ctrl
 
     def _set_color_shape(self, shape):
         return
