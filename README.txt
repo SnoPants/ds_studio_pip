@@ -1,25 +1,13 @@
-Documentation for commands.
+# DS Studio – Maya Technical Animation Toolkit
 
-# README – Maya Pipeline Pseudo Documentation
-
-This document serves as a quick start and reference guide for the custom DS Studios pipeline and library.
+A scalable Python-based rigging and pipeline framework designed for rapid tool development, modular rig construction, and studio-ready Maya integration.
 
 ---
 
-### Module: `ds_biped_rig`
-### Class: `Biped_Rig(name)`
+## Overview
 
-Represents a rig builder for bipedal characters.  
-Contains modular building systems for limbs, spines, feet, and more.
+DS Studio is a modular technical animation framework built to auto-load at Maya startup and provide reusable rigging, utility, and pipeline tools.  
 
----
+(This README is a WIP...)
 
-### Method: `limb_biped(name: str, start_joint: str, end_joint: str)`
-
-**Parameters**
-- `name` *(str)* — name of the limb.
-- `start_joint` *(str)* — The name of the starting joint (Maya node type: `joint`).
-- `end_joint` *(str)* — The name of the ending joint (Maya node type: `joint`).
-- `sc_solver` *( -OPTIONAL- str)* — The name of the joint that will have a single solver ik attached to it. (Maya node type: `joint`).
-
-> **TODO:** Add more documentation.
+This framework for my personal learning growth and aimed for my own work.
