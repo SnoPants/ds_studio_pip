@@ -36,4 +36,8 @@ def load_pipe_tools():
 maya.utils.executeDeferred(load_pipe_tools)
 
 # Still trying to see if i can autoload a shelf, problem with the current one is that it ported from 2024 so it acts funny anyways.
-# check out https://bindpose.com/scripting-custom-shelf-in-maya-python/ this might hel
+# check out https://bindpose.com/scripting-custom-shelf-in-maya-python/ this might help
+
+# TODO:
+# new idea, we make a repo of .py files that will autoload into a shelf if a shelf doesnt already exist with other basic Maya commands.
+# need to grab py files from work. 
