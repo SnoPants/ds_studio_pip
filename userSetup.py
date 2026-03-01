@@ -41,3 +41,9 @@ maya.utils.executeDeferred(load_pipe_tools)
 # TODO:
 # new idea, we make a repo of .py files that will autoload into a shelf if a shelf doesnt already exist with other basic Maya commands.
 # need to grab py files from work. 
+
+# mel commands to add to shelf for reference.
+#menuItemToShelf "MayaWindow|mainSelectMenu|menuItem2259";
+#menuItemToShelf "MayaWindow|mainDisplayMenu|objectsCompItem|toggleAxisItem";
+#menuItemToShelf "MayaWindow|mainDisplayMenu|objectsCompItem|toggleAxisItem";
+
