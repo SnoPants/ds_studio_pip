@@ -40,7 +40,7 @@ class RigCtrl:
             raise ValueError(f"Shape '{self.shape}' not found in nurbs data.") # circle is not working.
         
         shape_data = data["controls"][self.shape]
-        print(self.shape)
+        #print(self.shape)
         ctrl = cmds.createNode('transform', name=self.name)
 
         for i, curve_data in enumerate(shape_data["curves"]):
@@ -120,5 +120,3 @@ class RigCtrl:
             
             cmds.delete(trg_shape)
             return
-
-# Need to consider how in create_ctrl, the ctrl is placed. Do we bother giving an xform argument in it?

@@ -12,23 +12,23 @@ try:
     ds_menus.create_ds_menu()
 
     # Rigging
-    from pipe.library.rigging import ds_rig
-    from pipe.library.rigging.rig_type import ds_biped_rig as biped
-    from pipe.library.rigging.rig_type.builders import ds_biped_limb_builder as limb
-    from pipe.library.rigging.rig_type.builders import ds_controller_builder as ctrl
+    from pipe.library.rigging import ds_rig as ds_rig
+    from pipe.library.rigging.rig_type import ds_biped_rig as ds_biped
+    from pipe.library.rigging.rig_type.builders import ds_biped_limb_builder as ds_limb
+    from pipe.library.rigging.rig_type.builders import ds_controller_builder as ds_ctrl
 
     # Utilities
-    from pipe.library.utilities import ds_maya_math as math
-    from pipe.library.utilities import ds_maya_utils as utils
+    from pipe.library.utilities import ds_maya_math as ds_math
+    from pipe.library.utilities import ds_maya_utils as ds_utils
 
     __all__ = [
         "cmds",
         "ds_rig",
-        "biped",
-        "limb",
-        "ctrl",
-        "math",
-        "utils",
+        "ds_biped",
+        "ds_limb",
+        "ds_ctrl",
+        "ds_math",
+        "ds_utils",
     ]
 
     print(f"Successfully imported: {__all__}")
