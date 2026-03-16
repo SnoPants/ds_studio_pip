@@ -10,6 +10,7 @@ try:
     # DS maya menu
     from pipe import ds_menus
     ds_menus.create_ds_menu()
+    ds_menus.create_ds_shelve()
 
     # Rigging
     from pipe.library.rigging import ds_rig as ds_rig

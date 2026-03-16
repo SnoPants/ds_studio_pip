@@ -1,0 +1,390 @@
+{
+    "vert positions": {
+        "SK_Soldier_Stan.vtx[8478]": {
+            "translation": [
+                7.030372619628906,
+                0.9107894897460938,
+                168.4088592529297
+            ]
+        },
+        "SK_Soldier_Stan.vtx[4222]": {
+            "translation": [
+                3.1513938903808594,
+                61.1059684753418,
+                89.14842224121094
+            ]
+        },
+        "SK_Soldier_Stan.vtx[7960]": {
+            "translation": [
+                6.297624111175537,
+                0.2317028045654297,
+                160.98745727539062
+            ]
+        },
+        "SK_Soldier_Stan.vtx[8608]": {
+            "translation": [
+                5.001183986663818,
+                -5.3050713539123535,
+                168.3356475830078
+            ]
+        },
+        "SK_Soldier_Stan.vtx[4036]": {
+            "translation": [
+                11.185382843017578,
+                59.394344329833984,
+                86.07754516601562
+            ]
+        },
+        "SK_Soldier_Stan.vtx[2677]": {
+            "translation": [
+                6.966736793518066,
+                -1.5360651016235352,
+                164.33941650390625
+            ]
+        },
+        "SK_Soldier_Stan.vtx[8624]": {
+            "translation": [
+                7.095447540283203,
+                -1.0165834426879883,
+                167.9586944580078
+            ]
+        },
+        "SK_Soldier_Stan.vtx[1696]": {
+            "translation": [
+                11.93167495727539,
+                -54.24886703491211,
+                94.69693756103516
+            ]
+        },
+        "SK_Soldier_Stan.vtx[2463]": {
+            "translation": [
+                1.882718563079834,
+                -6.3119916915893555,
+                165.5918731689453
+            ]
+        },
+        "SK_Soldier_Stan.vtx[3000]": {
+            "translation": [
+                -13.069901466369629,
+                14.270155906677246,
+                13.706119537353516
+            ]
+        }
+    },
+    "joint positions": {
+        "l_index_02": {
+            "translation": [
+                14.029102425566485,
+                57.50626587025213,
+                89.87317536330501
+            ]
+        },
+        "l_hip_helper": {
+            "translation": [
+                -7.1025599999999995,
+                11.8395,
+                75.61270000000002
+            ]
+        },
+        "r_ring_02": {
+            "translation": [
+                6.989960000000002,
+                -59.973800000000004,
+                89.2302
+            ]
+        },
+        "l_toe": {
+            "translation": [
+                5.717522618785123,
+                20.51261244802263,
+                3.334150663371819
+            ]
+        },
+        "l_index_00": {
+            "translation": [
+                7.156368420283023,
+                52.365243286660025,
+                100.7557644221294
+            ]
+        },
+        "r_index_03": {
+            "translation": [
+                14.222600000000005,
+                -57.353999999999985,
+                87.0859
+            ]
+        },
+        "r_index_00": {
+            "translation": [
+                7.15637000000001,
+                -52.36520000000001,
+                100.75600000000001
+            ]
+        },
+        "r_hip_helper": {
+            "translation": [
+                -7.102560000000001,
+                -11.839500000000001,
+                75.61270000000002
+            ]
+        },
+        "r_toe": {
+            "translation": [
+                5.717520000000002,
+                -20.512600000000003,
+                3.3341499999999975
+            ]
+        },
+        "r_thumb_01": {
+            "translation": [
+                11.796099999999988,
+                -49.98680000000001,
+                97.06739999999999
+            ]
+        }
+    },
+    "vert to joint distances": {
+        "SK_Soldier_Stan.vtx[8478]": {
+            "l_index_02": 97.05608589699045,
+            "l_hip_helper": 94.50028396752568,
+            "r_ring_02": 99.88090383855302,
+            "l_toe": 166.23962961442072,
+            "l_index_00": 84.99716425073126,
+            "r_index_03": 100.29923993046532,
+            "r_index_00": 86.11188243528363,
+            "r_hip_helper": 94.7282261978888,
+            "r_toe": 166.46424491214174,
+            "r_thumb_01": 87.76605597648877
+        },
+        "SK_Soldier_Stan.vtx[4222]": {
+            "l_index_02": 11.480752105568897,
+            "l_hip_helper": 52.1108843046164,
+            "r_ring_02": 121.14062741880663,
+            "l_toe": 94.96575581043179,
+            "l_index_00": 15.07217603115589,
+            "r_index_03": 118.99407436463434,
+            "r_index_00": 114.1336136737305,
+            "r_hip_helper": 74.89593258691924,
+            "r_toe": 118.45786188963228,
+            "r_thumb_01": 111.70964309307313
+        },
+        "SK_Soldier_Stan.vtx[7960]": {
+            "l_index_02": 91.63728729705396,
+            "l_hip_helper": 87.19607255935098,
+            "r_ring_02": 93.67115814710573,
+            "l_toe": 158.95350546436768,
+            "l_index_00": 79.66492521151463,
+            "r_index_03": 94.02318106755389,
+            "r_index_00": 79.96874436085439,
+            "r_hip_helper": 87.25897117886625,
+            "r_toe": 159.0132947727832,
+            "r_thumb_01": 81.47333909397202
+        },
+        "SK_Soldier_Stan.vtx[8608]": {
+            "l_index_02": 100.91148072471647,
+            "l_hip_helper": 95.06830151993515,
+            "r_ring_02": 96.17846411291242,
+            "l_toe": 167.01065811394557,
+            "l_index_00": 88.86816425876877,
+            "r_index_03": 96.93114550441989,
+            "r_index_00": 82.3790586398141,
+            "r_hip_helper": 93.73763590312443,
+            "r_toe": 165.7023725522387,
+            "r_thumb_01": 84.39070370594028
+        },
+        "SK_Soldier_Stan.vtx[4036]": {
+            "l_index_02": 5.104741906138269,
+            "l_hip_helper": 52.01370066639079,
+            "r_ring_02": 119.48344942326547,
+            "l_toe": 91.58687626172734,
+            "l_index_00": 16.76577881353269,
+            "r_index_03": 116.79219739043941,
+            "r_index_00": 112.79133712131731,
+            "r_hip_helper": 74.28473878116002,
+            "r_toe": 115.1585286455183,
+            "r_thumb_01": 109.93354637971913
+        },
+        "SK_Soldier_Stan.vtx[2677]": {
+            "l_index_02": 95.294779104227,
+            "l_hip_helper": 90.8255529882225,
+            "r_ring_02": 95.16492948140565,
+            "l_toe": 162.5127697940189,
+            "l_index_00": 83.35627041908222,
+            "r_index_03": 95.58449256762253,
+            "r_index_00": 81.40324176333256,
+            "r_hip_helper": 90.42420087860178,
+            "r_toe": 162.1245362717821,
+            "r_thumb_01": 83.0440886859186
+        },
+        "SK_Soldier_Stan.vtx[8624]": {
+            "l_index_02": 97.82815419940471,
+            "l_hip_helper": 94.31142556465628,
+            "r_ring_02": 98.35720792820173,
+            "l_toe": 166.0320612784829,
+            "l_index_00": 85.82457073427703,
+            "r_index_03": 98.81856956049971,
+            "r_index_00": 84.57473781403232,
+            "r_hip_helper": 94.05584316436105,
+            "r_toe": 165.78068036992684,
+            "r_thumb_01": 86.28878184995456
+        },
+        "SK_Soldier_Stan.vtx[1696]": {
+            "l_index_02": 111.87885240015609,
+            "l_hip_helper": 71.37354188378244,
+            "r_ring_02": 9.331699938111063,
+            "l_toe": 118.2161297517013,
+            "l_index_00": 106.8928503461074,
+            "r_index_03": 8.533351102453612,
+            "r_index_00": 7.941283055820901,
+            "r_hip_helper": 50.2500212536938,
+            "r_toe": 97.59052405949447,
+            "r_thumb_01": 4.878799868171246
+        },
+        "SK_Soldier_Stan.vtx[2463]": {
+            "l_index_02": 99.76785973722345,
+            "l_hip_helper": 92.2304910843102,
+            "r_ring_02": 93.47073721322855,
+            "l_toe": 164.50481337057658,
+            "l_index_00": 87.60451064264905,
+            "r_index_03": 94.44970677157377,
+            "r_index_00": 79.70194379408544,
+            "r_hip_helper": 90.59547551132306,
+            "r_toe": 162.92308524687223,
+            "r_thumb_01": 81.86188023354825
+        },
+        "SK_Soldier_Stan.vtx[3000]": {
+            "l_index_02": 91.67953757470158,
+            "l_hip_helper": 62.24099900299677,
+            "r_ring_02": 107.78891297555087,
+            "l_toe": 22.349794311109083,
+            "l_index_00": 97.14925810618331,
+            "r_index_03": 106.1107559410543,
+            "r_index_00": 111.47669892314659,
+            "r_hip_helper": 67.45181984438571,
+            "r_toe": 40.870344577728815,
+            "r_thumb_01": 108.14979191699894
+        }
+    },
+    "vert weights": {
+        "SK_Soldier_Stan.vtx[8478]": {
+            "l_index_02 weight": 0.0,
+            "l_hip_helper weight": 0.0,
+            "r_ring_02 weight": 0.0,
+            "l_toe weight": 0.0,
+            "l_index_00 weight": 0.0,
+            "r_index_03 weight": 0.0,
+            "r_index_00 weight": 0.0,
+            "r_hip_helper weight": 0.0,
+            "r_toe weight": 0.0,
+            "r_thumb_01 weight": 0.0
+        },
+        "SK_Soldier_Stan.vtx[4222]": {
+            "l_index_02 weight": 0.0,
+            "l_hip_helper weight": 0.0,
+            "r_ring_02 weight": 0.0,
+            "l_toe weight": 0.0,
+            "l_index_00 weight": 0.0,
+            "r_index_03 weight": 0.0,
+            "r_index_00 weight": 0.0,
+            "r_hip_helper weight": 0.0,
+            "r_toe weight": 0.0,
+            "r_thumb_01 weight": 0.0
+        },
+        "SK_Soldier_Stan.vtx[7960]": {
+            "l_index_02 weight": 0.0,
+            "l_hip_helper weight": 0.0,
+            "r_ring_02 weight": 0.0,
+            "l_toe weight": 0.0,
+            "l_index_00 weight": 0.0,
+            "r_index_03 weight": 0.0,
+            "r_index_00 weight": 0.0,
+            "r_hip_helper weight": 0.0,
+            "r_toe weight": 0.0,
+            "r_thumb_01 weight": 0.0
+        },
+        "SK_Soldier_Stan.vtx[8608]": {
+            "l_index_02 weight": 0.0,
+            "l_hip_helper weight": 0.0,
+            "r_ring_02 weight": 0.0,
+            "l_toe weight": 0.0,
+            "l_index_00 weight": 0.0,
+            "r_index_03 weight": 0.0,
+            "r_index_00 weight": 0.0,
+            "r_hip_helper weight": 0.0,
+            "r_toe weight": 0.0,
+            "r_thumb_01 weight": 0.0
+        },
+        "SK_Soldier_Stan.vtx[4036]": {
+            "l_index_02 weight": 0.0,
+            "l_hip_helper weight": 0.0,
+            "r_ring_02 weight": 0.0,
+            "l_toe weight": 0.0,
+            "l_index_00 weight": 0.0,
+            "r_index_03 weight": 0.0,
+            "r_index_00 weight": 0.0,
+            "r_hip_helper weight": 0.0,
+            "r_toe weight": 0.0,
+            "r_thumb_01 weight": 0.0
+        },
+        "SK_Soldier_Stan.vtx[2677]": {
+            "l_index_02 weight": 0.0,
+            "l_hip_helper weight": 0.0,
+            "r_ring_02 weight": 0.0,
+            "l_toe weight": 0.0,
+            "l_index_00 weight": 0.0,
+            "r_index_03 weight": 0.0,
+            "r_index_00 weight": 0.0,
+            "r_hip_helper weight": 0.0,
+            "r_toe weight": 0.0,
+            "r_thumb_01 weight": 0.0
+        },
+        "SK_Soldier_Stan.vtx[8624]": {
+            "l_index_02 weight": 0.0,
+            "l_hip_helper weight": 0.0,
+            "r_ring_02 weight": 0.0,
+            "l_toe weight": 0.0,
+            "l_index_00 weight": 0.0,
+            "r_index_03 weight": 0.0,
+            "r_index_00 weight": 0.0,
+            "r_hip_helper weight": 0.0,
+            "r_toe weight": 0.0,
+            "r_thumb_01 weight": 0.0
+        },
+        "SK_Soldier_Stan.vtx[1696]": {
+            "l_index_02 weight": 0.0,
+            "l_hip_helper weight": 0.0,
+            "r_ring_02 weight": 0.0,
+            "l_toe weight": 0.0,
+            "l_index_00 weight": 0.0,
+            "r_index_03 weight": 0.0,
+            "r_index_00 weight": 0.925859742,
+            "r_hip_helper weight": 0.0,
+            "r_toe weight": 0.0,
+            "r_thumb_01 weight": 0.0
+        },
+        "SK_Soldier_Stan.vtx[2463]": {
+            "l_index_02 weight": 0.0,
+            "l_hip_helper weight": 0.0,
+            "r_ring_02 weight": 0.0,
+            "l_toe weight": 0.0,
+            "l_index_00 weight": 0.0,
+            "r_index_03 weight": 0.0,
+            "r_index_00 weight": 0.0,
+            "r_hip_helper weight": 0.0,
+            "r_toe weight": 0.0,
+            "r_thumb_01 weight": 0.0
+        },
+        "SK_Soldier_Stan.vtx[3000]": {
+            "l_index_02 weight": 0.0,
+            "l_hip_helper weight": 0.0,
+            "r_ring_02 weight": 0.0,
+            "l_toe weight": 0.0,
+            "l_index_00 weight": 0.0,
+            "r_index_03 weight": 0.0,
+            "r_index_00 weight": 0.0,
+            "r_hip_helper weight": 0.0,
+            "r_toe weight": 0.0,
+            "r_thumb_01 weight": 0.0
+        }
+    }
+}
