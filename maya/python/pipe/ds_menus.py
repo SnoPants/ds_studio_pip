@@ -75,10 +75,21 @@ def create_ds_shelve():
     cmds.shelfButton(
         command='from pipe.library.tools.shelves.items import center_joint; center_joint.run()', #C:\Users\andre\Documents\maya\DS_STUDIO\ds_studio_pip\maya\python\pipe\icons\shelf_icons\bozog_icons\Unused.png
         # Warning: Pixmap file C:\Users\andre\Documents\maya\2025\scripts\DS_STUDIO\ds_studio_pip\maya\python\pipe\icons\bozog_icons/Unused.png not found, using default.
-        annotation='Create a new sphere',
+        annotation='Create a Joint at the center of the selected objects',
         label='CTR_JNT',
         image= os.path.join(icon_path, r'shelf_icons\bozog_icons\Unused.png'), # Use a built-in Maya icon, or provide a custom path
         sourceType='python',
+        width=32,
+        height=32
+    )
+
+    cmds.shelfButton(
+        command='NodeEditorWindow', #C:\Users\andre\Documents\maya\DS_STUDIO\ds_studio_pip\maya\python\pipe\icons\shelf_icons\bozog_icons\Unused.png
+        # Warning: Pixmap file C:\Users\andre\Documents\maya\2025\scripts\DS_STUDIO\ds_studio_pip\maya\python\pipe\icons\bozog_icons/Unused.png not found, using default.
+        annotation='Open Node Editor',
+        label='NE',
+        image= os.path.join(icon_path, r'shelf_icons\bozog_icons\Layout 2.png'), # Use a built-in Maya icon, or provide a custom path
+        sourceType='mel',
         width=32,
         height=32
     )
