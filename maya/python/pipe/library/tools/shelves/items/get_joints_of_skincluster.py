@@ -9,20 +9,21 @@ def checkCluster(cluster, sel):
     if not cluster:
         raise Exception('This object has no skin cluster. This was your selection: {}'.format(sel))
 
-getSel= cmds.ls(sl=True)
+def run():
+    getSel= cmds.ls(sl=True)
 
-checkSel(getSel)
+    checkSel(getSel)
 
-mesh= getSel[0]
+    mesh= getSel[0]
 
-getSkinCluster= mel.eval('findRelatedSkinCluster '+mesh)
+    getSkinCluster= mel.eval('findRelatedSkinCluster '+mesh)
 
-checkCluster(getSkinCluster, mesh)
-joints= cmds.skinCluster(getSkinCluster, query=True,inf=True)
+    checkCluster(getSkinCluster, mesh)
+    joints= cmds.skinCluster(getSkinCluster, query=True,inf=True)
 
-cmds.select(joints)
+    cmds.select(joints)
 
-if cmds.objExists('TEMP_FINDER_JNTS_set01') == True:
-    cmds.delete('TEMP_FINDER_JNTS_set01')
+    if cmds.objExists('TEMP_FINDER_JNTS_set01') == True:
+        cmds.delete('TEMP_FINDER_JNTS_set01')
 
-jntSet = cmds.sets(n='TEMP_FINDER_JNTS_set01')
+    jntSet = cmds.sets(n=f'{getSel[0]}_JNTS_set')
