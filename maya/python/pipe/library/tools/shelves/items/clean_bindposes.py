@@ -1,6 +1,6 @@
 import maya.cmds as cmds
 
-def NT_rebuildDagPose():
+def rebuildBindPose():
     """Deletes all existing bind poses and recreates a single new bind pose."""
     
     # Get selected object(s)
@@ -54,4 +54,4 @@ def NT_rebuildDagPose():
         cmds.connectAttr(f"{new_dag_pose}.message", f"{skin_cluster}.bindPose", force=True)
 
 # Run the function
-NT_rebuildDagPose()
+rebuildBindPose()

@@ -105,6 +105,17 @@ def create_ds_shelve():
         width=32,
         height=32
     )
+
+    cmds.shelfButton(
+        command='from pipe.library.tools.shelves.items import clean_bindposes; clean_bindposes.rebuildBindPose()', #C:\Users\andre\Documents\maya\DS_STUDIO\ds_studio_pip\maya\python\pipe\icons\shelf_icons\bozog_icons\Unused.png
+        # Warning: Pixmap file C:\Users\andre\Documents\maya\2025\scripts\DS_STUDIO\ds_studio_pip\maya\python\pipe\icons\bozog_icons/Unused.png not found, using default.
+        annotation='Rebuild the bind pose for the selected character (selected root joint).',
+        label='CLN_BND',
+        image= os.path.join(icon_path, r'shelf_icons\bozog_icons\QuickNamer.png'), # Use a built-in Maya icon, or provide a custom path
+        sourceType='python',
+        width=32,
+        height=32
+    )
     
     # Save the shelf layout so it persists across Maya sessions
     # Note: this saves the current configuration to a MEL file in user prefs
