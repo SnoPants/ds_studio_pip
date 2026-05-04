@@ -116,6 +116,17 @@ def create_ds_shelve():
         width=32,
         height=32
     )
+
+    cmds.shelfButton(
+        command='from pipe.library.tools.shelves.items import set_pivot_to_object; set_pivot_to_object.show_parent_reset_ui()', #C:\Users\andre\Documents\maya\DS_STUDIO\ds_studio_pip\maya\python\pipe\icons\shelf_icons\bozog_icons\Unused.png
+        # Warning: Pixmap file C:\Users\andre\Documents\maya\2025\scripts\DS_STUDIO\ds_studio_pip\maya\python\pipe\icons\bozog_icons/Unused.png not found, using default.
+        annotation='Set pivot to object.',
+        label='CLN_BND',
+        image= os.path.join(icon_path, r'shelf_icons\bozog_icons\Reset All Transforms.png'), # Use a built-in Maya icon, or provide a custom path
+        sourceType='python',
+        width=32,
+        height=32
+    )
     
     # Save the shelf layout so it persists across Maya sessions
     # Note: this saves the current configuration to a MEL file in user prefs

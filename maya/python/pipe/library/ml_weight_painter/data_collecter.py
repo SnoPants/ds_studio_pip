@@ -12,9 +12,9 @@ import re
 def get_json(sel):
     
     joints, skinCluster = get_skinned_joints(sel)
-    print(joints, skinCluster)
+    #print(joints, skinCluster)
     vrts = get_mesh_verts(sel)
-    print(vrts)
+    #print(vrts)
 
     test_vrts = random.sample(vrts, 10)
     test_joints = random.sample(joints, 10)
@@ -103,24 +103,55 @@ def get_distance(joints, vrts):
     #print(data_set)
     return data_set
     
+
+### --- Handle NPZ --- ###
+
 def get_npz(sel):
+    joints, skinCluster = get_skinned_joints(sel)
+    vrts = get_mesh_verts(sel)
+
+    data = get_distance_npz(sel)
+    data['vert weights'] = get_skin_weights(skinCluster, vrts,joints,)
+
+    npz_folder = r"C:\Users\andre\Documents\maya\DS_STUDIO\ds_studio_pip\maya\python\pipe\library\ml_weight_painter\npz_data"
+
+    file_name = Path(cmds.file(q=True, sn=True)).stem
+    print(file_name)
+
+    file_path = os.path.join(npz_folder, f"{file_name}.npz")
+
+    np.savez(file_path, **data)
+
+def get_distance_npz(sel):
     
-    def get_npz_data(joints, verts):
+    def get_positions(objs):
         
-        vert_positions = []
+        objs_dict = defaultdict(dict)
         
-        for v in verts:
+        for i in objs:
             i_translation = cmds.xform(i, q=True, ws=True, t= True)
             objs_dict[i]["translation"] = i_translation
         
-        return
+        return dict(objs_dict)
     
-    joints, skinCluster = get_skinned_joints(sel)
-    vrts = get_mesh_verts(sel)
-    data = get_distance(test_joints, test_vrts)
-    data['vert weights'] = get_skin_weights(skinCluster, test_vrts,test_joints,)
-    return
+    vert_data = get_positions(vrts)
+    joint_data = get_positions(joints)
     
+    distance_data = defaultdict(dict)
+    for v in vert_data:
+        vrt_pos = vert_data[v]["translation"]
+        for j in joint_data:
+            joint_pos = joint_data[j]["translation"]
+            dist = math.dist(vrt_pos, joint_pos)
+            #cmds.distanceDimension(sp=vrt_pos, ep=joint_pos) USE ONLY FOR SMALL SAMPLE SIZE
+            distance_data[v][j] = dist
+    
+    data_set = {}
+    data_set['vert positions'] = vert_data
+    data_set['joint positions'] = joint_data
+    data_set['vert to joint distances'] = dict(distance_data) 
+
+    return data_set
 
 sel = cmds.ls(selection=True)
 

@@ -69,5 +69,4 @@ def show_parent_reset_ui():
 
     cmds.showWindow(win)
 
-# Open the UI
 show_parent_reset_ui()
