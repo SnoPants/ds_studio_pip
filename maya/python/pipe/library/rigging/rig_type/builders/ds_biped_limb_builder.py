@@ -3,7 +3,7 @@ from functools import singledispatch
 import maya.cmds as cmds
 from pipe.library.rigging.ds_rig import Builder
 from pipe.library.utilities.ds_maya_math import dot_product_pv, get_scale_by_distance
-from pipe.library.utilities.ds_maya_utils import get_selected_joints_hier
+from pipe.library.utilities.ds_maya_utils import make_chain, get_selected_joints_hier
 from pipe.library.utilities.ds_maya_mtx_constraints import *
 from pipe.library.utilities.validate.ds_validate import validate_chain
 from pipe.library.rigging.rig_type.builders.ds_controller_builder import RigCtrl
@@ -36,29 +36,6 @@ class BipedLimbBuilder(Builder):
 
 
     def _build_joints(self):
-        ### Helper function to create joint chains
-        def make_chain(name, trg_chain, start, end):
-            
-            main_chain = get_selected_joints_hier(trg_chain, start, end)
-            built_chain = [name + i for i in main_chain]
-
-            selection_parent = cmds.listRelatives(start, p= True) # this needs work, currently only works if start joint has a parent,
-            # will need to consider how to deal with with first selected joint parents in cases of clavicles etc...
-
-            for j, joint in enumerate(built_chain):
-                new_joint = cmds.createNode('joint', n = joint)
-                cmds.xform(new_joint, worldSpace=True, matrix=cmds.xform(main_chain[j], query=True, worldSpace=True, matrix=True))
-                cmds.makeIdentity(new_joint, apply=True, t=0, r=1, s=0)
-                if j == 0:
-                    if selection_parent:
-                        cmds.parent(new_joint, selection_parent)
-                    else:
-                        cmds.parent(new_joint, w= True)
-                else:
-                    cmds.parent(new_joint, built_chain[j-1])
-
-            return built_chain
-        ###
 
         joint_chain = cmds.listRelatives(self.start_joint, ad = True, type='joint') or []
         joint_chain.append(self.start_joint)

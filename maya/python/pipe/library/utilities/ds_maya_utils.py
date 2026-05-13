@@ -15,11 +15,40 @@ def get_selected_joints_hier(chain, start, end):
                 chain_list.append(joint)
             else:
                 continue
+    
+    print(f"Getting joint hierarchy from {start} to {end} in chain: {chain_list}")
 
-    validate_chain(chain_list)
     chain_heir = [start] + chain_list + [end]
+    validate_chain(chain_heir)
 
     return chain_heir
+
+def make_chain(name, trg_chain, start, end):
+
+    print(f"Making chain: {name} from {start} to {end} with target chain: {trg_chain}")
+            
+    main_chain = get_selected_joints_hier(trg_chain, start, end)
+    built_chain = [name + i for i in main_chain]
+
+    selection_parent = cmds.listRelatives(start, p= True) # this needs work, currently only works if start joint has a parent,
+    # will need to consider how to deal with with first selected joint parents in cases of clavicles etc...
+
+    for j, joint in enumerate(built_chain):
+        print(f"Creating joint: {joint} at position of {main_chain[j]}")
+        new_joint = cmds.createNode('joint', n = joint)
+        cmds.xform(new_joint, worldSpace=True, matrix=cmds.xform(main_chain[j], query=True, worldSpace=True, matrix=True))
+        cmds.makeIdentity(new_joint, apply=True, t=0, r=1, s=0)
+        if j == 0:
+            if selection_parent:
+                cmds.parent(new_joint, selection_parent)
+            else:
+                cmds.parent(new_joint, w= True)
+        else:
+            cmds.parent(new_joint, built_chain[j-1])
+
+    print(f"Built chain: {built_chain}")
+
+    return built_chain
 
 # This will be for something fancier when i want save custom nurb controls to a json, for later. This means i would need to store all my nurb controls on the same json, for conistency.
 def get_nurbs_points(nurbs):
