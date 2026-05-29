@@ -46,13 +46,20 @@ except Exception as e:
 '''
 #-----
 
+import importlib
 import pipe
+
+importlib.reload(pipe.library.rigging.ds_rig)
+importlib.reload(pipe.library.rigging.rig_type.ds_biped_rig)
+importlib.reload(pipe.library.rigging.rig_type.builders.ds_biped_limb_builder)
+importlib.reload(pipe.library.utilities.ds_maya_utils)
 
 # Testing Limb Rig
 sel = pipe.cmds.ls(sl=True)
+print(sel)
 #This_Rig = pipe.rig.Rig("Soldier_Stan")
 This_Rig = pipe.ds_biped.Biped_Rig("Soldier_Stan")
-This_Rig.limb_biped("R_Brute_Arm", sel[0], sel[1], sel[2])
+This_Rig.limb_biped("R_Brute_Arm", sel[0], sel[1], sel[2]) # third joint is the end joint, not the wrist AND is optional
 
 # Testing Ctrl
 sel_ctrl = pipe.cmds.ls(sl=True)
