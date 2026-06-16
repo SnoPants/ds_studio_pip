@@ -2,7 +2,7 @@ from PIL import Image, PngImagePlugin
 import os
 import re
 
-folder = r"C:\Users\v-adespain\Desktop\TAKE_NUKE_LOCAL\WIP_adespain\adespain\port\warthog\p2"
+folder = r"C:\Users\v-adespain\Desktop\TAKE_NUKE_LOCAL\WIP_adespain\adespain\port\warthog\p8"
 
 def natural_sort_key(s):
     return [int(text) if text.isdigit() else text.lower()
