@@ -12,34 +12,62 @@ class MayaMenu:
     def create_menus(self):
         if cmds.menu(self.menu_name, exists=True):
             cmds.deleteUI(self.menu_name)
-            
-        cmds.menu(self.menu_name, label =self.menu_label, parent=self.menu_parent)
-        
+             
+        menu = cmds.menu(
+            self.menu_name,
+            label=self.menu_label,
+            parent=self.menu_parent
+        )
+         
         for key, value in self.menu_items.items():
-            cmds.menuItem(label= key, command = value)
+            if isinstance(value, dict):
+                submenu = cmds.menuItem(
+                    label=key,
+                    subMenu=True,
+                    tearOff=True,
+                    parent=menu
+                )
 
+                for item_label, command in value.items():
+                    cmds.menuItem(
+                        label=item_label,
+                        command=command,
+                        parent=submenu
+                    )
+            else:
+                cmds.menuItem(
+                    label=key,
+                    command=value,
+                    parent=menu
+                )
 
-#--- DEBUG ---#
+def create_ds_menu(): # init will call this function to create the menu
 
-def create_ds_menu():
+    def open_skeleton_mapper(*args):
+        from pipe.library.tools.skeleton_mapper import skeleton_mapper_ui
+        skeleton_mapper_ui.show()
 
-    def mod_rigger(debug): print(f"{debug} This will be for rigging!")
+    def open_rig_mapper(*args):
+        cmds.warning("Rig Mapper has not been implemented yet.")
+
     def exporter(debug): print("This will be for exporting!")
     def tools(debug): print("This will be for tools!")
-        
+
+    rigging_submenu = {
+        'Skeleton Mapper': open_skeleton_mapper,
+        'Rig Mapper': open_rig_mapper
+    }
+         
     ds_studio_submenu = {
-        'MOD Rigger': mod_rigger,
+        'Rigging': rigging_submenu,
         'Exporter': exporter,
         'Tools': tools
     }
-    # ----- #
             
     DS_STUDIO = MayaMenu("DS Studio", 'DS Studio', mel.eval('$temp = $gMainWindow'), ds_studio_submenu)
 
     print(DS_STUDIO.menu_items)
-    DS_STUDIO.create_menus()
-
-
+    DS_STUDIO.create_menus() # this will create the submenus and items in the menu bar from the class instance
 
 def register_icons():
     icon_path = os.path.dirname(os.path.abspath(__file__))
