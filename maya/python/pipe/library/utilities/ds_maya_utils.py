@@ -80,3 +80,34 @@ def get_nurbs_points(nurbs):
             
         return print(cv_positions)'''
     return
+
+### Function to calculate the centroid of a set of nodes ###
+def get_centroid(node_array):
+    if not node_array:
+        cmds.warning("No nodes were provided.")
+        return None
+    
+    posX, posY, posZ = 0, 0, 0  # Initialize positions
+
+    for node in node_array:
+        position = cmds.xform(node, query=True, translation=True, worldSpace=True)
+        posX += position[0]
+        posY += position[1]
+        posZ += position[2]
+
+    # Calculate the centroid as the average position
+    node_count = len(node_array)
+    centroid = [posX / node_count, posY / node_count, posZ / node_count]
+    return centroid
+
+def centroid_run(object=None):
+    if object is None:
+        cmds.warning("No target object was provided.")
+        return
+    
+    # Get selected nodes and calculate their centroid
+    selected_nodes = cmds.ls(selection=True, flatten=True)
+    cmds.select(clear=True)  # Deselect everything
+    centroid_position = get_centroid(selected_nodes)
+
+    cmds.xform(object, worldSpace=True, translation=centroid_position)

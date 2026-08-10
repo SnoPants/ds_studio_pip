@@ -5,7 +5,6 @@ from decimal import *
 from pipe.library.rigging.rig_type.builders.ds_controller_builder import RigCtrl
 
 
-
 def get_distance(objA, objB):
     posA = om.MVector(cmds.xform(objA, q=True, ws=True, t=True))
     posB = om.MVector(cmds.xform(objB, q=True, ws=True, t=True))
