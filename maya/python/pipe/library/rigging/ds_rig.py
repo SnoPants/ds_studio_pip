@@ -5,11 +5,13 @@ print("From rigging module - ds_rig.py loaded")
 
 #### Base Rig class
 class Rig:
-    def __init__(self, name, skeleton=None):
+    def __init__(self, name, config=None):
         self.rig_name = name
-        #self.skeleton = skeleton
+        self.mapping = config
 
-    def run_rig(self, python_script, skeleton_path):
+    # TODO: Going to transition to a config file for rigging that can be registered through skeleton mapping.
+    # We can leave the rest of it the rigging moudles callable ever if we need to in the futere.
+    '''def run_rig(self, python_script, skeleton_path):
         print(f"Running rig setup for: {self.rig_name}")
         self.import_skeleton(skeleton_path)
         if os.path.exists(python_script):
@@ -26,7 +28,7 @@ class Rig:
             cmds.file(force=True, new = True)
             cmds.file(skeleton_path, i=True)
         else:
-            raise FileNotFoundError(f"Skeleton file not found: {skeleton_path}")
+            raise FileNotFoundError(f"Skeleton file not found: {skeleton_path}")'''
     
 #### Builder base class, uses "Abstract Factory Pattern" for building all rig types.
 class Builder:

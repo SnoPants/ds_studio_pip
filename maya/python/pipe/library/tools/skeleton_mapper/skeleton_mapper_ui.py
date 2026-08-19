@@ -1,3 +1,6 @@
+import maya.cmds as cmds
+
+from pipe.library.tools.skeleton_mapper.skeleton_region import RegionWidget
 from pathlib import Path
 
 from pipe.library.ui import MayaUI
@@ -25,6 +28,8 @@ class SkeletonMapperUI(MayaUI):
             "left_token": "_l",
             "right_token": "_r"
         }
+
+        self.selected_region_widget = None
 
         super().__init__(parent=parent)
 
@@ -57,6 +62,13 @@ class SkeletonMapperUI(MayaUI):
         self.search_field = self.find_widget(QtWidgets.QLineEdit,"search_field")
         self.region_scroll = self.find_widget(QtWidgets.QScrollArea,"region_scroll")
         self.region_content = self.find_widget(QtWidgets.QWidget,"region_content")
+
+        self.region_layout = self.region_content.layout()
+        if self.region_layout is None:
+            self.region_layout = QtWidgets.QVBoxLayout(self.region_content)
+            self.region_layout.setContentMargins(0, 0, 0, 0)
+        self.region_layout.setAlignment(QtCore.Qt.AlignTop)
+
         self.hierarchy_tree = self.find_widget(QtWidgets.QTreeWidget,"hierarchy_tree")
         self.unparent_button = self.find_widget(QtWidgets.QPushButton,"unparent_button")
         self.expand_all_button = self.find_widget(QtWidgets.QPushButton,"expand_all_button")
@@ -71,13 +83,45 @@ class SkeletonMapperUI(MayaUI):
 
     def use_selected_mesh(self):
         """Use the selected Maya mesh as the target mesh."""
+        selection = cmds.ls(sl=True, objectsOnly=True) or None
+        if not selection:
+            cmds.warning("No mesh selected. Please select a mesh in the scene.")
+            return
 
-        print("TODO: Use selected Maya mesh.")
+        if not cmds.listRelatives(selection[0], shapes=True, type="mesh"):
+            cmds.warning("Selected object is not a mesh. Please select a valid mesh.")
+            return
+        
+        self.mesh_field.setText(selection[0])
 
+    def get_next_region_name(self):
+        return "Region {}".format(len(self.regions) + 1)
+
+    def remove_region(self, region_widget):
+        self.region_layout.removeWidget(region_widget)
+
+        if region_widget.region_data in self.regions:
+            self.regions.remove(region_widget.region_data)
+
+        if self.selected_region_widget is region_widget:
+            self.selected_region_widget = None
+
+        region_widget.deleteLater()
+
+    def set_selected_region(self, region_widget):
+        self.selected_region_widget = region_widget
+    
     def add_region(self):
         """Add a new joint region."""
+        region_name = self.get_next_region_name()
+        region_data = {"name": region_name, "joints": []}
 
-        print("TODO: Add region.")
+        region_widget = RegionWidget(region_data = region_data, parent= self.region_content)
+        region_widget.delete_requested.connect(self.remove_region)
+        region_widget.selected.connect(self.set_selected_region)
+        spacer_index = self.region_layout.count() - 1
+        self.region_layout.insertWidget(spacer_index, region_widget)
+        self.regions.append(region_data)
 
     def filter_regions(self, text):
         """Filter the displayed regions."""
