@@ -111,3 +111,10 @@ def centroid_run(object=None):
     centroid_position = get_centroid(selected_nodes)
 
     cmds.xform(object, worldSpace=True, translation=centroid_position)
+
+def create_joint():
+    return cmds.createNode('joint')
+
+def delete_node(node):
+    if cmds.objExists(node):
+        cmds.delete(node)

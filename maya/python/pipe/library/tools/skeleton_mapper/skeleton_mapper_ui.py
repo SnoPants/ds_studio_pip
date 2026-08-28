@@ -70,6 +70,12 @@ class SkeletonMapperUI(MayaUI):
         self.region_layout.setAlignment(QtCore.Qt.AlignTop)
 
         self.hierarchy_tree = self.find_widget(QtWidgets.QTreeWidget,"hierarchy_tree")
+        self.hierarchy_tree.setHeaderLabels(["Joint", "Region"])
+        header = self.hierarchy_tree.header()
+        header.setStretchLastSection(False)
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+
         self.unparent_button = self.find_widget(QtWidgets.QPushButton,"unparent_button")
         self.expand_all_button = self.find_widget(QtWidgets.QPushButton,"expand_all_button")
         self.selected_joint_field = self.find_widget(QtWidgets.QLineEdit,"selected_joint_field")
@@ -116,7 +122,7 @@ class SkeletonMapperUI(MayaUI):
         region_name = self.get_next_region_name()
         region_data = {"name": region_name, "joints": []}
 
-        region_widget = RegionWidget(region_data = region_data, parent= self.region_content)
+        region_widget = RegionWidget(main_window=self, region_data = region_data, parent= self.region_content)
         region_widget.delete_requested.connect(self.remove_region)
         region_widget.selected.connect(self.set_selected_region)
         spacer_index = self.region_layout.count() - 1
@@ -304,7 +310,6 @@ class SkeletonMapperUI(MayaUI):
         self.close_mirror_configuration()
         self.regions = []
         self.parent_map = {}
-
 
 _window = None
 

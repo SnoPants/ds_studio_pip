@@ -1,17 +1,19 @@
 import maya.cmds as cmds
 
 from pipe.library.ui import QtCore, QtWidgets
-
+import pipe.library.utilities.ds_maya_utils as mu
 
 class JointWidget(QtWidgets.QWidget):
 
     delete_requested = QtCore.Signal(object)
 
-    def __init__(self, joint_data, parent=None):
+    def __init__(self, main_window, joint_data, region_tag, parent=None):
         super().__init__(parent)
 
         # Set up the joint data
         self.joint_data = joint_data
+        self.main_window = main_window
+        self.region_tag = region_tag
 
         # Keep the joint widget vertically compact
         self.setSizePolicy(
@@ -62,6 +64,10 @@ class JointWidget(QtWidgets.QWidget):
         joint_layout.addWidget(self.delete_button)
 
         main_layout.addWidget(joint_row)
+
+        item = QtWidgets.QTreeWidgetItem(self.main_window.hierarchy_tree)
+        item.setText(0, self.joint_data["name"])
+        item.setText(1, self.region_tag)
 
         # Create the expanded vertex ID panel
         self.vertex_panel = QtWidgets.QWidget()
@@ -167,11 +173,12 @@ class RegionWidget(QtWidgets.QFrame):
     delete_requested = QtCore.Signal(object)
     selected = QtCore.Signal(object)
 
-    def __init__(self, region_data, parent=None):
+    def __init__(self, main_window, region_data, parent=None):
         super().__init__(parent)
 
         # Set up the UI
         self.region_data = region_data
+        self.main_window = main_window
         self.joint_widgets = []
 
         self.setSizePolicy(
@@ -237,7 +244,12 @@ class RegionWidget(QtWidgets.QFrame):
         self.region_data["name"] = text
 
     def request_delete(self):
+        for joint_data in self.region_data["joints"]:
+            mu.delete_node(joint_data["joint"])
+        self.region_data["joints"].clear()
         self.delete_requested.emit(self)
+
+    #TODO: Implement a reset region functionality here
 
     def mousePressEvent(self, event):
         self.selected.emit(self)
@@ -247,17 +259,18 @@ class RegionWidget(QtWidgets.QFrame):
         return "Joint {}".format(len(self.region_data["joints"]) + 1)
 
     def add_joint(self):
+
+        joint = mu.create_joint()
+
         joint_data = {
-            "name": self.get_next_joint_name(),
+            "name": joint,
             "parent": None,
             "mesh": None,
-            "vertex_ids": []
+            "vertex_ids": [],
+            "joint": joint
         }
 
-        joint_widget = JointWidget(
-            joint_data=joint_data,
-            parent=self.joint_content
-        )
+        joint_widget = JointWidget(main_window=self.main_window, joint_data=joint_data, region_tag=self.region_data["name"], parent=self.joint_content)
 
         joint_widget.delete_requested.connect(self.remove_joint)
 
@@ -270,6 +283,10 @@ class RegionWidget(QtWidgets.QFrame):
         self.updateGeometry()
 
     def remove_joint(self, joint_widget):
+
+        if cmds.objExists(joint_widget.joint_data["joint"]):
+            cmds.delete(joint_widget.joint_data["joint"])
+
         self.joint_layout.removeWidget(joint_widget)
 
         if joint_widget in self.joint_widgets:
