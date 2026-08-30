@@ -112,8 +112,29 @@ def centroid_run(object=None):
 
     cmds.xform(object, worldSpace=True, translation=centroid_position)
 
-def create_joint():
-    return cmds.createNode('joint')
+def create_joint(tags = None):
+    joint = cmds.joint()
+    cmds.addAttr(longName='objectTag', dataType='string')
+    cmds.setAttr(f"{joint}.objectTag", "ds_object", type="string")
+
+    if tags:
+        for tag_name, tag_value in tags.items():
+            cmds.addAttr(joint, longName=tag_name, dataType='string')
+            cmds.setAttr(f"{joint}.{tag_name}", tag_value, type="string")
+
+    cmds.select(joint, deselect=True)
+    return joint
+
+# TODO: Remember to compensate for tag renames
+
+def is_ds_object(node):
+    if not cmds.objExists(node):
+        return False
+    if not cmds.attributeQuery("objectTag", node=node, exists=True):
+        return False
+    if cmds.getAttr(f"{node}.objectTag") != "ds_object":
+        return False
+    return True
 
 def delete_node(node):
     if cmds.objExists(node):

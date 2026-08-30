@@ -65,9 +65,10 @@ class JointWidget(QtWidgets.QWidget):
 
         main_layout.addWidget(joint_row)
 
-        item = QtWidgets.QTreeWidgetItem(self.main_window.hierarchy_tree)
-        item.setText(0, self.joint_data["name"])
-        item.setText(1, self.region_tag)
+        if cmds.objExists(self.joint_data["name"]):
+            item = QtWidgets.QTreeWidgetItem(self.main_window.hierarchy_tree)
+            item.setText(0, self.joint_data["name"])
+            item.setText(1, self.region_tag)
 
         # Create the expanded vertex ID panel
         self.vertex_panel = QtWidgets.QWidget()
@@ -245,7 +246,9 @@ class RegionWidget(QtWidgets.QFrame):
 
     def request_delete(self):
         for joint_data in self.region_data["joints"]:
-            mu.delete_node(joint_data["joint"])
+            self.delete_tree_item(joint_data["joint"])
+            if mu.is_ds_object(joint_data["joint"]):
+                mu.delete_node(joint_data["joint"])
         self.region_data["joints"].clear()
         self.delete_requested.emit(self)
 
@@ -260,7 +263,7 @@ class RegionWidget(QtWidgets.QFrame):
 
     def add_joint(self):
 
-        joint = mu.create_joint()
+        joint = mu.create_joint({"regionTag": self.region_data["name"]})
 
         joint_data = {
             "name": joint,
@@ -284,8 +287,12 @@ class RegionWidget(QtWidgets.QFrame):
 
     def remove_joint(self, joint_widget):
 
-        if cmds.objExists(joint_widget.joint_data["joint"]):
-            cmds.delete(joint_widget.joint_data["joint"])
+        joint_name = joint_widget.joint_data["joint"]
+
+        if cmds.objExists(joint_name) and mu.is_ds_object(joint_widget.joint_data["joint"]):
+            mu.delete_node(joint_name)
+
+        self.delete_tree_item(joint_name)
 
         self.joint_layout.removeWidget(joint_widget)
 
@@ -296,3 +303,15 @@ class RegionWidget(QtWidgets.QFrame):
             self.region_data["joints"].remove(joint_widget.joint_data)
 
         joint_widget.deleteLater()
+
+    def delete_tree_item(self, joint_name):
+        items = self.main_window.hierarchy_tree.findItems(joint_name,QtCore.Qt.MatchFlag.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive,0)
+
+        for item in items:
+            parent = item.parent()
+
+            if parent:
+                parent.removeChild(item)
+            else:
+                index = self.main_window.hierarchy_tree.indexOfTopLevelItem(item)
+                self.main_window.hierarchy_tree.takeTopLevelItem(index)
