@@ -1,7 +1,6 @@
 import maya.cmds as cmds
 
 from pipe.library.ui import QtCore, QtWidgets
-import pipe.library.utilities.ds_maya_utils as mu
 
 class JointWidget(QtWidgets.QWidget):
 
@@ -14,7 +13,6 @@ class JointWidget(QtWidgets.QWidget):
         self.joint_data = joint_data
         self.main_window = main_window
         self.region_tag = region_tag
-
         # Keep the joint widget vertically compact
         self.setSizePolicy(
             QtWidgets.QSizePolicy.Expanding,
@@ -37,7 +35,7 @@ class JointWidget(QtWidgets.QWidget):
         self.expand_button.setFixedWidth(20)
 
         # Joint names are edited directly instead of using a prompt
-        self.name_field = QtWidgets.QLineEdit(self.joint_data["name"])
+        self.name_field = QtWidgets.QLineEdit(self.joint_data.name)
         self.name_field.setPlaceholderText("Joint Name")
         self.name_field.setMinimumWidth(120)
 
@@ -65,10 +63,9 @@ class JointWidget(QtWidgets.QWidget):
 
         main_layout.addWidget(joint_row)
 
-        if cmds.objExists(self.joint_data["name"]):
-            item = QtWidgets.QTreeWidgetItem(self.main_window.hierarchy_tree)
-            item.setText(0, self.joint_data["name"])
-            item.setText(1, self.region_tag)
+        self.tree_item = QtWidgets.QTreeWidgetItem(self.main_window.hierarchy_tree)
+        self.tree_item.setText(0, self.joint_data.name)
+        self.tree_item.setText(1, self.region_tag)
 
         # Create the expanded vertex ID panel
         self.vertex_panel = QtWidgets.QWidget()
@@ -87,9 +84,12 @@ class JointWidget(QtWidgets.QWidget):
         self.vertex_panel.hide()
         main_layout.addWidget(self.vertex_panel)
 
+        self.last_valid_name = self.joint_data.name
+
         # Connect signals
         self.expand_button.clicked.connect(self.toggle_vertex_panel)
         self.name_field.textChanged.connect(self.update_joint_name)
+        self.name_field.editingFinished.connect(self.finalize_joint_name)
         self.set_button.clicked.connect(self.set_vertices)
         self.select_button.clicked.connect(self.select_vertices)
         self.clear_button.clicked.connect(self.clear_vertices)
@@ -103,11 +103,28 @@ class JointWidget(QtWidgets.QWidget):
         self.expand_button.setText("▼" if visible else "▶")
         self.updateGeometry()
 
+    def is_name_duplicate(self, name):
+        existing = self.main_window.skeleton.all_joint_names(exclude=self.joint_data)
+        return name in existing
+
     def update_joint_name(self, text):
-        self.joint_data["name"] = text
+        if self.is_name_duplicate(text):
+            self.name_field.setStyleSheet("QLineEdit { border: 1px solid red; }")
+        else:
+            self.name_field.setStyleSheet("")
+            self.joint_data.rename(text)
+            self.tree_item.setText(0, text)
+            self.last_valid_name = text
+
+    def finalize_joint_name(self):
+        if self.is_name_duplicate(self.name_field.text()):
+            self.name_field.blockSignals(True)
+            self.name_field.setText(self.last_valid_name)
+            self.name_field.blockSignals(False)
+            self.name_field.setStyleSheet("")
 
     def update_display(self):
-        vertex_ids = self.joint_data["vertex_ids"]
+        vertex_ids = self.joint_data.vertex_ids
         self.count_label.setText("{} verts".format(len(vertex_ids)))
 
         if vertex_ids:
@@ -144,13 +161,12 @@ class JointWidget(QtWidgets.QWidget):
 
             vertex_ids.append(int(vertex_id.rstrip("]")))
 
-        self.joint_data["mesh"] = mesh
-        self.joint_data["vertex_ids"] = vertex_ids
+        self.joint_data.set_vertices(mesh, vertex_ids)
         self.update_display()
 
     def select_vertices(self):
-        mesh = self.joint_data.get("mesh")
-        vertex_ids = self.joint_data["vertex_ids"]
+        mesh = self.joint_data.mesh
+        vertex_ids = self.joint_data.vertex_ids
 
         if not mesh or not vertex_ids:
             return
@@ -163,7 +179,7 @@ class JointWidget(QtWidgets.QWidget):
         cmds.select(vertices, replace=True)
 
     def clear_vertices(self):
-        self.joint_data["vertex_ids"] = []
+        self.joint_data.clear_vertices()
         self.update_display()
 
     def request_delete(self):
@@ -203,7 +219,7 @@ class RegionWidget(QtWidgets.QFrame):
         self.expand_button.setFixedWidth(20)
 
         # Create a line edit for the region name
-        self.name_label = QtWidgets.QLineEdit(self.region_data["name"])
+        self.name_label = QtWidgets.QLineEdit(self.region_data.name)
         self.name_label.setPlaceholderText("Region Name")
         self.name_label.textChanged.connect(self.update_region_name)
 
@@ -242,14 +258,16 @@ class RegionWidget(QtWidgets.QFrame):
         self.updateGeometry()
 
     def update_region_name(self, text):
-        self.region_data["name"] = text
+        self.region_data.rename(text)
+        for joint_widget in self.joint_widgets:
+            joint_widget.tree_item.setText(1, text)
+            joint_widget.region_tag = text
 
     def request_delete(self):
-        for joint_data in self.region_data["joints"]:
-            self.delete_tree_item(joint_data["joint"])
-            if mu.is_ds_object(joint_data["joint"]):
-                mu.delete_node(joint_data["joint"])
-        self.region_data["joints"].clear()
+        for joint_widget in self.joint_widgets:
+            self.remove_tree_item(joint_widget.tree_item)
+        self.joint_widgets.clear()
+        self.region_data.joints.clear()
         self.delete_requested.emit(self)
 
     #TODO: Implement a reset region functionality here
@@ -259,59 +277,48 @@ class RegionWidget(QtWidgets.QFrame):
         super().mousePressEvent(event)
 
     def get_next_joint_name(self):
-        return "Joint {}".format(len(self.region_data["joints"]) + 1)
+        existing_names = self.main_window.skeleton.all_joint_names()
+
+        index = len(self.region_data.joints) + 1
+        name = "Joint_{}".format(index)
+        while name in existing_names:
+            index += 1
+            name = "Joint_{}".format(index)
+        return name
 
     def add_joint(self):
+        joint_name = self.get_next_joint_name()
+        joint_data = self.region_data.add_joint(joint_name)
 
-        joint = mu.create_joint({"regionTag": self.region_data["name"]})
-
-        joint_data = {
-            "name": joint,
-            "parent": None,
-            "mesh": None,
-            "vertex_ids": [],
-            "joint": joint
-        }
-
-        joint_widget = JointWidget(main_window=self.main_window, joint_data=joint_data, region_tag=self.region_data["name"], parent=self.joint_content)
+        joint_widget = JointWidget(main_window=self.main_window, joint_data=joint_data, region_tag=self.region_data.name, parent=self.joint_content)
 
         joint_widget.delete_requested.connect(self.remove_joint)
 
         self.joint_layout.addWidget(joint_widget)
         self.joint_widgets.append(joint_widget)
-        self.region_data["joints"].append(joint_data)
 
         self.joint_content.show()
         self.expand_button.setText("▼")
         self.updateGeometry()
 
     def remove_joint(self, joint_widget):
-
-        joint_name = joint_widget.joint_data["joint"]
-
-        if cmds.objExists(joint_name) and mu.is_ds_object(joint_widget.joint_data["joint"]):
-            mu.delete_node(joint_name)
-
-        self.delete_tree_item(joint_name)
+        self.remove_tree_item(joint_widget.tree_item)
 
         self.joint_layout.removeWidget(joint_widget)
 
         if joint_widget in self.joint_widgets:
             self.joint_widgets.remove(joint_widget)
 
-        if joint_widget.joint_data in self.region_data["joints"]:
-            self.region_data["joints"].remove(joint_widget.joint_data)
+        if joint_widget.joint_data in self.region_data.joints:
+            self.region_data.remove_joint(joint_widget.joint_data)
 
         joint_widget.deleteLater()
 
-    def delete_tree_item(self, joint_name):
-        items = self.main_window.hierarchy_tree.findItems(joint_name,QtCore.Qt.MatchFlag.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive,0)
+    def remove_tree_item(self, tree_item):
+        parent = tree_item.parent()
 
-        for item in items:
-            parent = item.parent()
-
-            if parent:
-                parent.removeChild(item)
-            else:
-                index = self.main_window.hierarchy_tree.indexOfTopLevelItem(item)
-                self.main_window.hierarchy_tree.takeTopLevelItem(index)
+        if parent:
+            parent.removeChild(tree_item)
+        else:
+            index = self.main_window.hierarchy_tree.indexOfTopLevelItem(tree_item)
+            self.main_window.hierarchy_tree.takeTopLevelItem(index)

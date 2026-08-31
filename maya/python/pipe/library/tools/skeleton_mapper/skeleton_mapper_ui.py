@@ -1,5 +1,6 @@
 import maya.cmds as cmds
 
+from pipe.library.tools.skeleton_mapper.skeleton_data import SkeletonData
 from pipe.library.tools.skeleton_mapper.skeleton_region import RegionWidget
 from pathlib import Path
 
@@ -16,8 +17,7 @@ class SkeletonMapperUI(MayaUI):
     OBJECT_NAME = "DSSkeletonMapperWindow"
 
     def __init__(self, parent=None):
-        self.regions = []
-        self.parent_map = {}
+        self.skeleton = SkeletonData()
         self.mirror_settings_window = None
         self.mirror_settings = {
             "axis": "X",
@@ -41,8 +41,6 @@ class SkeletonMapperUI(MayaUI):
         self.use_selected_button.clicked.connect(self.use_selected_mesh)
         self.add_region_button.clicked.connect(self.add_region)
         self.search_field.textChanged.connect(self.filter_regions)
-        self.hierarchy_tree.itemSelectionChanged.connect(self.update_selected_joint_info)
-        self.unparent_button.clicked.connect(self.unparent_selected)
         self.expand_all_button.clicked.connect(self.hierarchy_tree.expandAll)
         self.load_mapping_action.triggered.connect(self.load_mapping)
         self.save_mapping_action.triggered.connect(self.save_mapping)
@@ -76,10 +74,7 @@ class SkeletonMapperUI(MayaUI):
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
 
-        self.unparent_button = self.find_widget(QtWidgets.QPushButton,"unparent_button")
         self.expand_all_button = self.find_widget(QtWidgets.QPushButton,"expand_all_button")
-        self.selected_joint_field = self.find_widget(QtWidgets.QLineEdit,"selected_joint_field")
-        self.parent_joint_field = self.find_widget(QtWidgets.QLineEdit,"parent_joint_field")
         self.load_mapping_action = self.find_widget(QtCore.QObject,"load_mapping_action")
         self.save_mapping_action = self.find_widget(QtCore.QObject,"save_mapping_action")
         self.mirror_configuration_action = self.find_widget(QtCore.QObject,"mirror_configuration_action")
@@ -98,16 +93,16 @@ class SkeletonMapperUI(MayaUI):
             cmds.warning("Selected object is not a mesh. Please select a valid mesh.")
             return
         
+        self.skeleton.mesh = selection[0]
         self.mesh_field.setText(selection[0])
 
     def get_next_region_name(self):
-        return "Region {}".format(len(self.regions) + 1)
+        return "Region_{}".format(len(self.skeleton.regions) + 1)
 
     def remove_region(self, region_widget):
         self.region_layout.removeWidget(region_widget)
 
-        if region_widget.region_data in self.regions:
-            self.regions.remove(region_widget.region_data)
+        self.skeleton.remove_region(region_widget.region_data)
 
         if self.selected_region_widget is region_widget:
             self.selected_region_widget = None
@@ -120,65 +115,20 @@ class SkeletonMapperUI(MayaUI):
     def add_region(self):
         """Add a new joint region."""
         region_name = self.get_next_region_name()
-        region_data = {"name": region_name, "joints": []}
+        region_data = self.skeleton.add_region(region_name)
 
-        region_widget = RegionWidget(main_window=self, region_data = region_data, parent= self.region_content)
+        region_widget = RegionWidget(main_window=self, region_data=region_data, parent=self.region_content)
         region_widget.delete_requested.connect(self.remove_region)
         region_widget.selected.connect(self.set_selected_region)
         spacer_index = self.region_layout.count() - 1
         self.region_layout.insertWidget(spacer_index, region_widget)
-        self.regions.append(region_data)
 
     def filter_regions(self, text):
         """Filter the displayed regions."""
 
         print("TODO: Filter regions using: {}".format(text))
 
-    def update_selected_joint_info(self):
-        """Display information about the hierarchy selection."""
 
-        selected_items = (self.hierarchy_tree.selectedItems())
-
-        if not selected_items:
-            self.selected_joint_field.clear()
-            self.parent_joint_field.clear()
-            return
-
-        selected_item = selected_items[0]
-        joint_name = selected_item.text(0)
-
-        parent_item = selected_item.parent()
-
-        if parent_item is None:
-            parent_name = ""
-        else:
-            parent_name = parent_item.text(0)
-
-        self.selected_joint_field.setText(joint_name)
-
-        self.parent_joint_field.setText(parent_name)
-
-    def unparent_selected(self):
-        """Move the selected hierarchy item to the root."""
-
-        selected_items = (self.hierarchy_tree.selectedItems())
-
-        if not selected_items:
-            return
-
-        selected_item = selected_items[0]
-        parent_item = selected_item.parent()
-
-        if parent_item is None:
-            return
-
-        item_index = parent_item.indexOfChild(selected_item)
-
-        selected_item = parent_item.takeChild(item_index)
-
-        self.hierarchy_tree.addTopLevelItem(selected_item)
-
-        self.update_selected_joint_info()
 
     def load_mapping(self):
         """Load Skeleton Mapper data from JSON."""
@@ -308,8 +258,7 @@ class SkeletonMapperUI(MayaUI):
         """
 
         self.close_mirror_configuration()
-        self.regions = []
-        self.parent_map = {}
+        self.skeleton = SkeletonData()
 
 _window = None
 
