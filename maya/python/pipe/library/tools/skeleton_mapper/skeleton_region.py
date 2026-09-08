@@ -1,10 +1,14 @@
 import maya.cmds as cmds
 
+from pipe.library.tools.skeleton_mapper.skeleton_data import JointData
 from pipe.library.ui import QtCore, QtWidgets
 
 class JointWidget(QtWidgets.QWidget):
 
     delete_requested = QtCore.Signal(object)
+
+    # Red because a bad joint name blocks the build, unlike a region name.
+    NAME_ERROR_STYLE = "QLineEdit { border: 1px solid red; }"
 
     def __init__(self, main_window, joint_data, region_tag, parent=None):
         super().__init__(parent)
@@ -103,25 +107,37 @@ class JointWidget(QtWidgets.QWidget):
         self.expand_button.setText("▼" if visible else "▶")
         self.updateGeometry()
 
-    def is_name_duplicate(self, name):
-        existing = self.main_window.skeleton.all_joint_names(exclude=self.joint_data)
-        return name in existing
+    def existing_joint_names(self):
+        return self.main_window.skeleton.all_joint_names(exclude=self.joint_data)
+
+    def name_error(self, name):
+        """Ask the model whether a name is usable. Returns "" if it is."""
+        return JointData.validate_name(name, self.existing_joint_names())
 
     def update_joint_name(self, text):
-        if self.is_name_duplicate(text):
-            self.name_field.setStyleSheet("QLineEdit { border: 1px solid red; }")
-        else:
-            self.name_field.setStyleSheet("")
-            self.joint_data.rename(text)
-            self.tree_item.setText(0, text)
-            self.last_valid_name = text
+        existing = self.existing_joint_names()
+        error = JointData.validate_name(text, existing)
+
+        self.name_field.setStyleSheet(self.NAME_ERROR_STYLE if error else "")
+        self.name_field.setToolTip(error)
+
+        # Reject in place while typing; finalize_joint_name reverts on exit.
+        if error:
+            return
+
+        self.joint_data.rename(text, existing)
+        self.tree_item.setText(0, text)
+        self.last_valid_name = text
 
     def finalize_joint_name(self):
-        if self.is_name_duplicate(self.name_field.text()):
-            self.name_field.blockSignals(True)
-            self.name_field.setText(self.last_valid_name)
-            self.name_field.blockSignals(False)
-            self.name_field.setStyleSheet("")
+        if not self.name_error(self.name_field.text()):
+            return
+
+        self.name_field.blockSignals(True)
+        self.name_field.setText(self.last_valid_name)
+        self.name_field.blockSignals(False)
+        self.name_field.setStyleSheet("")
+        self.name_field.setToolTip("")
 
     def update_display(self):
         vertex_ids = self.joint_data.vertex_ids
@@ -139,6 +155,14 @@ class JointWidget(QtWidgets.QWidget):
             self.clear_button.setEnabled(False)
 
     def set_vertices(self):
+        target_mesh = self.main_window.skeleton.mesh
+
+        if not target_mesh:
+            cmds.warning(
+                "No target mesh set. Set a target mesh before assigning vertices."
+            )
+            return
+
         selected_vertices = cmds.ls(selection=True, flatten=True) or []
         selected_vertices = [
             vertex for vertex in selected_vertices
@@ -149,23 +173,26 @@ class JointWidget(QtWidgets.QWidget):
             cmds.warning("No vertices selected. Please select mesh vertices.")
             return
 
-        mesh = selected_vertices[0].split(".vtx[")[0]
         vertex_ids = []
 
         for vertex in selected_vertices:
             vertex_mesh, vertex_id = vertex.split(".vtx[")
 
-            if vertex_mesh != mesh:
-                cmds.warning("Please select vertices from one mesh.")
+            # Vertex IDs only index the target mesh, so foreign ones are garbage.
+            if vertex_mesh != target_mesh:
+                cmds.warning(
+                    "Vertices must come from the target mesh '{}'. "
+                    "Found '{}'.".format(target_mesh, vertex_mesh)
+                )
                 return
 
             vertex_ids.append(int(vertex_id.rstrip("]")))
 
-        self.joint_data.set_vertices(mesh, vertex_ids)
+        self.joint_data.set_vertices(vertex_ids)
         self.update_display()
 
     def select_vertices(self):
-        mesh = self.joint_data.mesh
+        mesh = self.main_window.skeleton.mesh
         vertex_ids = self.joint_data.vertex_ids
 
         if not mesh or not vertex_ids:
@@ -190,6 +217,16 @@ class RegionWidget(QtWidgets.QFrame):
     delete_requested = QtCore.Signal(object)
     selected = QtCore.Signal(object)
 
+    # Both states carry a border so selection never shifts the layout.
+    SELECTED_STYLE = (
+        "#regionWidget { border: 1px solid #5285a6; border-radius: 2px;"
+        " background-color: rgba(82, 133, 166, 40); }"
+    )
+    DESELECTED_STYLE = (
+        "#regionWidget { border: 1px solid transparent; border-radius: 2px; }"
+    )
+    NAME_WARNING_STYLE = "QLineEdit { border: 1px solid #c8a020; }"
+
     def __init__(self, main_window, region_data, parent=None):
         super().__init__(parent)
 
@@ -198,6 +235,9 @@ class RegionWidget(QtWidgets.QFrame):
         self.main_window = main_window
         self.joint_widgets = []
 
+        self.setObjectName("regionWidget")
+        self.setStyleSheet(self.DESELECTED_STYLE)
+
         self.setSizePolicy(
             QtWidgets.QSizePolicy.Expanding,
             QtWidgets.QSizePolicy.Maximum
@@ -205,7 +245,7 @@ class RegionWidget(QtWidgets.QFrame):
 
         # Set up the main layout
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setContentsMargins(1, 1, 1, 1)
         main_layout.setSpacing(0)
 
         # Create the region header
@@ -257,8 +297,35 @@ class RegionWidget(QtWidgets.QFrame):
         self.expand_button.setText("▼" if visible else "▶")
         self.updateGeometry()
 
+    def set_selected(self, selected):
+        """Highlight or unhighlight this region."""
+        self.setStyleSheet(
+            self.SELECTED_STYLE if selected else self.DESELECTED_STYLE
+        )
+
+    def is_name_duplicate(self, name):
+        existing = self.main_window.skeleton.all_region_names(
+            exclude=self.region_data
+        )
+        return name in existing
+
     def update_region_name(self, text):
         self.region_data.rename(text)
+
+        if not text.strip():
+            warning = "Region name is empty."
+        elif self.is_name_duplicate(text):
+            warning = "Another region already uses this name."
+        else:
+            warning = ""
+
+        # Region names are organizational, not Maya node names, so a clash
+        # warns instead of blocking the edit the way joint names do.
+        self.name_label.setStyleSheet(
+            self.NAME_WARNING_STYLE if warning else ""
+        )
+        self.name_label.setToolTip(warning)
+
         for joint_widget in self.joint_widgets:
             joint_widget.tree_item.setText(1, text)
             joint_widget.region_tag = text
@@ -287,6 +354,9 @@ class RegionWidget(QtWidgets.QFrame):
         return name
 
     def add_joint(self):
+        # Working inside a region makes it the selected one.
+        self.selected.emit(self)
+
         joint_name = self.get_next_joint_name()
         joint_data = self.region_data.add_joint(joint_name)
 

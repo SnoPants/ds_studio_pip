@@ -39,9 +39,14 @@ class SkeletonMapperUI(MayaUI):
         self.find_widgets()
 
         self.use_selected_button.clicked.connect(self.use_selected_mesh)
+        # editingFinished, not textChanged: setText does not emit it, so
+        # use_selected_mesh writing the field cannot feed back into the model.
+        self.mesh_field.editingFinished.connect(self.commit_target_mesh)
         self.add_region_button.clicked.connect(self.add_region)
         self.search_field.textChanged.connect(self.filter_regions)
         self.expand_all_button.clicked.connect(self.hierarchy_tree.expandAll)
+        self.hierarchy_tree.itemExpanded.connect(self.sync_hierarchy_branch_expansion)
+        self.hierarchy_tree.itemCollapsed.connect(self.sync_hierarchy_branch_expansion)
         self.load_mapping_action.triggered.connect(self.load_mapping)
         self.save_mapping_action.triggered.connect(self.save_mapping)
         self.mirror_configuration_action.triggered.connect(self.open_mirror_configuration)
@@ -64,7 +69,7 @@ class SkeletonMapperUI(MayaUI):
         self.region_layout = self.region_content.layout()
         if self.region_layout is None:
             self.region_layout = QtWidgets.QVBoxLayout(self.region_content)
-            self.region_layout.setContentMargins(0, 0, 0, 0)
+            self.region_layout.setContentsMargins(0, 0, 0, 0)
         self.region_layout.setAlignment(QtCore.Qt.AlignTop)
 
         self.hierarchy_tree = self.find_widget(QtWidgets.QTreeWidget,"hierarchy_tree")
@@ -81,6 +86,51 @@ class SkeletonMapperUI(MayaUI):
         self.mirror_region_button = self.find_widget(QtWidgets.QPushButton,"mirror_region_button")
         self.build_button = self.find_widget(QtWidgets.QPushButton,"build_button")
 
+    def sync_hierarchy_branch_expansion(self, item):
+        """Apply Shift-expand/collapse to every descendant of the clicked joint."""
+        if not QtWidgets.QApplication.keyboardModifiers() & QtCore.Qt.ShiftModifier:
+            return
+
+        expanded = item.isExpanded()
+        pending = [item]
+
+        # Descendant updates must not trigger this handler again.
+        with QtCore.QSignalBlocker(self.hierarchy_tree):
+            while pending:
+                current = pending.pop()
+                current.setExpanded(expanded)
+                pending.extend(
+                    current.child(index) for index in range(current.childCount())
+                )
+
+
+    def is_mesh(self, name):
+        """Return True if a node exists and has a mesh shape."""
+        if not name or not cmds.objExists(name):
+            return False
+        return bool(cmds.listRelatives(name, shapes=True, type="mesh"))
+
+    def set_target_mesh(self, name):
+        """Validate a mesh name and store it on the model. True if accepted."""
+        if not self.is_mesh(name):
+            cmds.warning(
+                "'{}' is not a mesh. Please choose a valid mesh.".format(name)
+            )
+            return False
+
+        # Vertex IDs are indices into the old mesh, so they do not carry over.
+        if self.skeleton.mesh and name != self.skeleton.mesh:
+            assigned = sum(1 for joint in self.skeleton.joints() if joint.vertex_ids)
+            if assigned:
+                cmds.warning(
+                    "Target mesh changed to '{}'. {} joint(s) still hold vertex "
+                    "IDs from '{}' and should be reassigned.".format(
+                        name, assigned, self.skeleton.mesh
+                    )
+                )
+
+        self.skeleton.mesh = name
+        return True
 
     def use_selected_mesh(self):
         """Use the selected Maya mesh as the target mesh."""
@@ -89,15 +139,32 @@ class SkeletonMapperUI(MayaUI):
             cmds.warning("No mesh selected. Please select a mesh in the scene.")
             return
 
-        if not cmds.listRelatives(selection[0], shapes=True, type="mesh"):
-            cmds.warning("Selected object is not a mesh. Please select a valid mesh.")
+        if self.set_target_mesh(selection[0]):
+            self.mesh_field.setText(selection[0])
+
+    def commit_target_mesh(self):
+        """Write a hand-typed mesh name through to the model."""
+        name = self.mesh_field.text().strip()
+
+        if name == self.skeleton.mesh:
             return
-        
-        self.skeleton.mesh = selection[0]
-        self.mesh_field.setText(selection[0])
+
+        if not name:
+            self.skeleton.mesh = None
+            return
+
+        if not self.set_target_mesh(name):
+            self.mesh_field.setText(self.skeleton.mesh or "")
 
     def get_next_region_name(self):
-        return "Region_{}".format(len(self.skeleton.regions) + 1)
+        existing_names = self.skeleton.all_region_names()
+
+        index = len(self.skeleton.regions) + 1
+        name = "Region_{}".format(index)
+        while name in existing_names:
+            index += 1
+            name = "Region_{}".format(index)
+        return name
 
     def remove_region(self, region_widget):
         self.region_layout.removeWidget(region_widget)
@@ -110,7 +177,18 @@ class SkeletonMapperUI(MayaUI):
         region_widget.deleteLater()
 
     def set_selected_region(self, region_widget):
+        """Highlight one region and clear the previous highlight."""
+
+        if self.selected_region_widget is region_widget:
+            return
+
+        if self.selected_region_widget is not None:
+            self.selected_region_widget.set_selected(False)
+
         self.selected_region_widget = region_widget
+
+        if region_widget is not None:
+            region_widget.set_selected(True)
     
     def add_region(self):
         """Add a new joint region."""
@@ -122,6 +200,7 @@ class SkeletonMapperUI(MayaUI):
         region_widget.selected.connect(self.set_selected_region)
         spacer_index = self.region_layout.count() - 1
         self.region_layout.insertWidget(spacer_index, region_widget)
+        self.set_selected_region(region_widget)
 
     def filter_regions(self, text):
         """Filter the displayed regions."""
@@ -242,6 +321,10 @@ class SkeletonMapperUI(MayaUI):
 
     def mirror_selected_region(self):
         """Mirror the selected region using the stored settings."""
+
+        if self.selected_region_widget is None:
+            cmds.warning("No region selected. Click a region to select it first.")
+            return
 
         print("TODO: Mirror selected region using:", self.mirror_settings)
 

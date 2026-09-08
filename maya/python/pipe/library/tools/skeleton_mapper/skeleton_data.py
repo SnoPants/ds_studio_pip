@@ -1,21 +1,36 @@
+import uuid
+
+
 class JointData:
 
-    def __init__(self, name, parent=None, mesh=None, vertex_ids=None):
+    def __init__(self, name, parent=None, vertex_ids=None, uid=None):
+        self.uid = uid or str(uuid.uuid4())
         self.name = name
         self.parent = parent
-        self.mesh = mesh
         self.vertex_ids = vertex_ids or []
 
-    def rename(self, name, all_joint_names=None):
-        """Rename the joint. Returns False if the name is a duplicate."""
+    @staticmethod
+    def validate_name(name, all_joint_names=None):
+        """Return the reason a name is unusable, or "" if it is valid.
+
+        Single source of truth for joint naming rules, shared by the model's
+        own guard and by the UI's feedback, so the two cannot drift apart.
+        """
+        if not name or not name.strip():
+            return "Joint name cannot be empty."
         if all_joint_names is not None and name in all_joint_names:
-            if name != self.name:
-                return False
+            return "Another joint already uses this name."
+        return ""
+
+    def rename(self, name, all_joint_names=None):
+        """Rename the joint. Returns False if the name was rejected."""
+        if JointData.validate_name(name, all_joint_names):
+            return False
         self.name = name
         return True
 
-    def set_vertices(self, mesh, vertex_ids):
-        self.mesh = mesh
+    def set_vertices(self, vertex_ids):
+        """Assign vertices. These index SkeletonData.mesh, the one target mesh."""
         self.vertex_ids = list(vertex_ids)
 
     def clear_vertices(self):
@@ -23,6 +38,7 @@ class JointData:
 
     def to_dict(self):
         return {
+            "uid": self.uid,
             "name": self.name,
             "parent": self.parent,
             "vertex_ids": self.vertex_ids,
@@ -32,14 +48,15 @@ class JointData:
         return JointData(
             name=data["name"],
             parent=data.get("parent"),
-            mesh=data.get("mesh"),
             vertex_ids=data.get("vertex_ids", []),
+            uid=data.get("uid"),
         )
 
 
 class RegionData:
 
-    def __init__(self, name):
+    def __init__(self, name, uid=None):
+        self.uid = uid or str(uuid.uuid4())
         self.name = name
         self.joints = []
 
@@ -57,12 +74,13 @@ class RegionData:
 
     def to_dict(self):
         return {
+            "uid": self.uid,
             "name": self.name,
             "joints": [joint.to_dict() for joint in self.joints],
         }
 
     def from_dict(data):
-        region = RegionData(name=data["name"])
+        region = RegionData(name=data["name"], uid=data.get("uid"))
         for joint_data in data.get("joints", []):
             region.joints.append(JointData.from_dict(joint_data))
         return region
@@ -70,7 +88,7 @@ class RegionData:
 
 class SkeletonData:
 
-    SCHEMA_VERSION = 1
+    SCHEMA_VERSION = 2
 
     def __init__(self, mesh=None):
         self.mesh = mesh
@@ -85,20 +103,30 @@ class SkeletonData:
         if region in self.regions:
             self.regions.remove(region)
 
+    def joints(self):
+        """Iterate every joint in the mapping, across all regions."""
+        for region in self.regions:
+            for joint in region.joints:
+                yield joint
+
     def all_joint_names(self, exclude=None):
         """Return a set of all joint names, optionally excluding one JointData."""
-        names = set()
-        for region in self.regions:
-            for joint in region.joints:
-                if joint is not exclude:
-                    names.add(joint.name)
-        return names
+        return {
+            joint.name for joint in self.joints()
+            if joint is not exclude
+        }
+
+    def all_region_names(self, exclude=None):
+        """Return a set of all region names, optionally excluding one RegionData."""
+        return {
+            region.name for region in self.regions
+            if region is not exclude
+        }
 
     def find_joint(self, name):
-        for region in self.regions:
-            for joint in region.joints:
-                if joint.name == name:
-                    return joint
+        for joint in self.joints():
+            if joint.name == name:
+                return joint
         return None
 
     def to_dict(self):

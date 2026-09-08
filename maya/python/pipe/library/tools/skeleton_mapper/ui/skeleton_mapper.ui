@@ -63,6 +63,7 @@
       <item><widget class="QPushButton" name="expand_all_button"><property name="text"><string>Expand All</string></property></widget></item>
      </layout></item>
      <item><widget class="QTreeWidget" name="hierarchy_tree">
+      <property name="toolTip"><string>Hold Shift while expanding or collapsing a joint to apply it to the entire branch.</string></property>
       <property name="selectionMode"><enum>QAbstractItemView::SingleSelection</enum></property>
       <property name="dragEnabled"><bool>true</bool></property><property name="acceptDrops"><bool>true</bool></property>
       <property name="dragDropMode"><enum>QAbstractItemView::InternalMove</enum></property><property name="defaultDropAction"><enum>Qt::MoveAction</enum></property>
