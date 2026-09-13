@@ -3,6 +3,162 @@ import maya.cmds as cmds
 from pipe.library.tools.skeleton_mapper.skeleton_data import JointData
 from pipe.library.ui import QtCore, QtWidgets
 
+from pipe.library.rigging.rig_type.guide_registry import REGISTRY
+
+
+class RigGuideWidget(QtWidgets.QWidget):
+    configuration_changed = QtCore.Signal()
+
+    def __init__(self, main_window, region_data, parent=None, registry=None):
+        super().__init__(parent)
+        self.main_window = main_window
+        self.region_data = region_data
+        self.registry = registry or REGISTRY
+        self.config = region_data.rig_guide
+        self.editors = {}
+
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(15, 4, 4, 8)
+        form = QtWidgets.QFormLayout()
+        self.type_combo = QtWidgets.QComboBox()
+        self.type_combo.addItem('Choose rig type', None)
+
+        for key, label in self.registry.rig_types.items():
+            self.type_combo.addItem(label, key)
+
+        self.builder_combo = QtWidgets.QComboBox()
+        form.addRow('Rig type', self.type_combo)
+        form.addRow('Builder', self.builder_combo)
+        layout.addLayout(form)
+
+        self.parameter_form = QtWidgets.QFormLayout()
+        layout.addLayout(self.parameter_form)
+        self.status = QtWidgets.QLabel()
+        self.status.setWordWrap(True)
+        layout.addWidget(self.status)
+        type_id = self.config.get('rig_type')
+        index = self.type_combo.findData(type_id)
+        if index < 0:
+            self.type_combo.addItem('Unavailable: ' + str(type_id), type_id)
+            index = self.type_combo.count() - 1
+            
+        self.type_combo.setCurrentIndex(index)
+        self._populate_builders(self.config.get('builder_id'))
+        self.type_combo.currentIndexChanged.connect(self._type_changed)
+        self.builder_combo.currentIndexChanged.connect(self._builder_changed)
+        self.refresh_validation()
+
+    def _populate_builders(self, selected):
+        self.builder_combo.blockSignals(True)
+        self.builder_combo.clear()
+        self.builder_combo.addItem('Choose builder', None)
+        for spec in self.registry.for_type(self.type_combo.currentData()):
+            self.builder_combo.addItem(spec.label, spec.id)
+        index = self.builder_combo.findData(selected)
+        if index < 0 and selected:
+            self.builder_combo.addItem('Unavailable: ' + selected, selected)
+            index = self.builder_combo.count() - 1
+        self.builder_combo.setCurrentIndex(max(0, index))
+        self.builder_combo.blockSignals(False)
+        self._render_parameters()
+
+    def _type_changed(self, *args):
+        self.config['rig_type'] = self.type_combo.currentData()
+        self.config['builder_id'] = None
+        self._populate_builders(None)
+        self.refresh_validation()
+        self.configuration_changed.emit()
+
+    def _builder_changed(self, *args):
+        self.config['builder_id'] = self.builder_combo.currentData()
+        self._render_parameters()
+        self.refresh_validation()
+        self.configuration_changed.emit()
+
+    def _values(self, spec):
+        return self.config.setdefault('parameters', {}).setdefault(spec.id, spec.defaults())
+
+    def _render_parameters(self):
+        while self.parameter_form.rowCount():
+            self.parameter_form.removeRow(0)
+        self.editors.clear()
+        spec = self.registry.builders.get(self.builder_combo.currentData())
+        if spec is None or spec.rig_type != self.type_combo.currentData():
+            return
+        values = self._values(spec)
+        for parameter in spec.parameters:
+            value = values.get(parameter.key, parameter.default)
+            if parameter.kind == 'bool':
+                editor = QtWidgets.QCheckBox()
+                editor.setChecked(value is True)
+                signal = editor.toggled
+            elif parameter.kind == 'string':
+                editor = QtWidgets.QLineEdit(str(value))
+                signal = editor.textChanged
+            elif parameter.kind == 'choice':
+                editor = QtWidgets.QComboBox()
+                editor.addItems(list(parameter.choices))
+                editor.setCurrentIndex(editor.findText(str(value)))
+                signal = editor.currentTextChanged
+            elif parameter.kind in ('int', 'float'):
+                editor = QtWidgets.QSpinBox() if parameter.kind == 'int' else QtWidgets.QDoubleSpinBox()
+                editor.setRange(parameter.minimum, parameter.maximum)
+                editor.setValue(value if type(value) in (int, float) else parameter.default)
+                signal = editor.valueChanged
+            else:
+                raise ValueError('Unsupported parameter kind: ' + parameter.kind)
+            editor.setToolTip(parameter.help)
+            signal.connect(lambda value, key=parameter.key, spec=spec: self._parameter_changed(spec, key, value))
+            self.editors[parameter.key] = editor
+            self.parameter_form.addRow(parameter.label, editor)
+
+    def _parameter_changed(self, spec, key, value):
+        self._values(spec)[key] = value
+        self.refresh_validation()
+        self.configuration_changed.emit()
+
+    def refresh_validation(self):
+        skeleton = self.main_window.skeleton
+        skeleton_only = skeleton.build_skeleton_only
+        self.setEnabled(not skeleton_only)
+        self.status.setVisible(not skeleton_only)
+        if skeleton_only:
+            # Clear stale validation labels and skip every builder validator.
+            for index in range(1, self.builder_combo.count()):
+                spec = self.registry.builders.get(self.builder_combo.itemData(index))
+                if spec is not None:
+                    self.builder_combo.setItemText(index, spec.label)
+                self.builder_combo.setItemData(index, None, QtCore.Qt.ToolTipRole)
+            self.status.clear()
+            return
+        selected = self.builder_combo.currentData()
+        result = None
+        for index in range(1, self.builder_combo.count()):
+            spec = self.registry.builders.get(self.builder_combo.itemData(index))
+            if spec is None or spec.rig_type != self.type_combo.currentData():
+                continue
+            check = spec.validate(self.region_data, skeleton, self._values(spec))
+            self.builder_combo.setItemText(index, '{} — {}'.format(spec.label, 'Valid' if check.valid else 'Invalid'))
+            self.builder_combo.setItemData(index, '\n'.join(check.errors) or 'Region hierarchy is compatible.', QtCore.Qt.ToolTipRole)
+            if spec.id == selected:
+                result = check
+        if result is None:
+            message = ('Saved builder is unavailable.' if selected else
+                       'Choose a builder.' if self.registry.for_type(self.type_combo.currentData()) else
+                       'No builders registered for this rig type.' if self.type_combo.currentData() else 'Choose a rig type.')
+            color = '#c8a020'
+        elif result.valid:
+            names = {joint.uid: joint.name for joint in self.region_data.joints}
+            message = 'Valid hierarchy: ' + ' → '.join(names[uid] for uid in result.joint_uids)
+            color = '#70b878'
+        else:
+            message = 'Invalid: ' + '\n'.join(result.errors)
+            color = '#e08080'
+        self.status.setText(message)
+        self.status.setStyleSheet('color: {};'.format(color))
+
+
 class JointWidget(QtWidgets.QWidget):
 
     delete_requested = QtCore.Signal(object)
@@ -68,22 +224,45 @@ class JointWidget(QtWidgets.QWidget):
         main_layout.addWidget(joint_row)
 
         self.tree_item = QtWidgets.QTreeWidgetItem(self.main_window.hierarchy_tree)
+        self.tree_item.setData(0, QtCore.Qt.UserRole, self.joint_data.uid)
         self.tree_item.setText(0, self.joint_data.name)
         self.tree_item.setText(1, self.region_tag)
 
-        # Create the expanded vertex ID panel
+        # Create the expanded joint settings panel
         self.vertex_panel = QtWidgets.QWidget()
         vertex_layout = QtWidgets.QVBoxLayout(self.vertex_panel)
-        vertex_layout.setContentsMargins(28, 3, 8, 6)
-        vertex_layout.setSpacing(4)
+        vertex_layout.setContentsMargins(28, 8, 8, 12)
+        vertex_layout.setSpacing(12)
 
-        vertex_label = QtWidgets.QLabel("Vertex IDs")
+        self.orientation_group = QtWidgets.QGroupBox("Orientation")
+        orientation_form = QtWidgets.QFormLayout(self.orientation_group)
+        orientation_form.setContentsMargins(12, 18, 12, 12)
+        orientation_form.setHorizontalSpacing(20)
+        orientation_form.setVerticalSpacing(10)
+        self.primary_axis_combo = QtWidgets.QComboBox()
+        self.primary_axis_combo.addItems(list(JointData.AXES))
+        self.primary_axis_combo.setCurrentText(self.joint_data.primary_axis)
+        self.primary_axis_combo.setToolTip("Local primary axis. Primary and secondary must be different.")
+        self.secondary_axis_combo = QtWidgets.QComboBox()
+        self.secondary_axis_combo.setToolTip("Choose one of the two remaining local axes.")
+        self.refresh_orientation_controls()
+        orientation_form.addRow("Primary axis", self.primary_axis_combo)
+        orientation_form.addRow("Secondary axis", self.secondary_axis_combo)
+        self.primary_axis_combo.setFixedWidth(90)
+        self.secondary_axis_combo.setFixedWidth(90)
+        vertex_layout.addWidget(self.orientation_group)
+        self.primary_axis_combo.currentTextChanged.connect(self.update_primary_axis)
+        self.secondary_axis_combo.currentTextChanged.connect(self.update_secondary_axis)
+
+        self.vertices_group = QtWidgets.QGroupBox("Vertex IDs")
+        vertices_form = QtWidgets.QVBoxLayout(self.vertices_group)
+        vertices_form.setContentsMargins(12, 18, 12, 12)
         self.vertex_text = QtWidgets.QPlainTextEdit()
         self.vertex_text.setReadOnly(True)
         self.vertex_text.setFixedHeight(50)
 
-        vertex_layout.addWidget(vertex_label)
-        vertex_layout.addWidget(self.vertex_text)
+        vertices_form.addWidget(self.vertex_text)
+        vertex_layout.addWidget(self.vertices_group)
 
         self.vertex_panel.hide()
         main_layout.addWidget(self.vertex_panel)
@@ -100,6 +279,28 @@ class JointWidget(QtWidgets.QWidget):
         self.delete_button.clicked.connect(self.request_delete)
 
         self.update_display()
+
+    def refresh_orientation_controls(self):
+        with QtCore.QSignalBlocker(self.primary_axis_combo):
+            self.primary_axis_combo.setCurrentText(self.joint_data.primary_axis)
+        with QtCore.QSignalBlocker(self.secondary_axis_combo):
+            self.secondary_axis_combo.clear()
+            self.secondary_axis_combo.addItems([
+                axis for axis in JointData.AXES
+                if axis != self.joint_data.primary_axis
+            ])
+            self.secondary_axis_combo.setCurrentText(self.joint_data.secondary_axis)
+
+    def update_primary_axis(self, axis):
+        secondary = self.joint_data.secondary_axis
+        if secondary == axis:
+            # Swap roles when the new primary was the current secondary.
+            secondary = self.joint_data.primary_axis
+        self.joint_data.set_orientation(axis, secondary)
+        self.refresh_orientation_controls()
+
+    def update_secondary_axis(self, axis):
+        self.joint_data.set_orientation(self.joint_data.primary_axis, axis)
 
     def toggle_vertex_panel(self):
         visible = not self.vertex_panel.isVisible()
@@ -128,6 +329,7 @@ class JointWidget(QtWidgets.QWidget):
         self.joint_data.rename(text, existing)
         self.tree_item.setText(0, text)
         self.last_valid_name = text
+        self.main_window.refresh_rig_guides()
 
     def finalize_joint_name(self):
         if not self.name_error(self.name_field.text()):
@@ -286,6 +488,9 @@ class RegionWidget(QtWidgets.QFrame):
 
         main_layout.addWidget(self.joint_content)
 
+        self.rig_guide_widget = RigGuideWidget(main_window, region_data, parent=self)
+        main_layout.addWidget(self.rig_guide_widget)
+
         # Connect signals
         self.expand_button.clicked.connect(self.toggle_region)
         self.delete_button.clicked.connect(self.request_delete)
@@ -294,6 +499,7 @@ class RegionWidget(QtWidgets.QFrame):
     def toggle_region(self):
         visible = not self.joint_content.isVisible()
         self.joint_content.setVisible(visible)
+        self.rig_guide_widget.setVisible(visible)
         self.expand_button.setText("▼" if visible else "▶")
         self.updateGeometry()
 
@@ -369,6 +575,8 @@ class RegionWidget(QtWidgets.QFrame):
 
         self.joint_content.show()
         self.expand_button.setText("▼")
+        self.rig_guide_widget.show()
+        self.main_window.sync_hierarchy_data()
         self.updateGeometry()
 
     def remove_joint(self, joint_widget):
@@ -383,8 +591,14 @@ class RegionWidget(QtWidgets.QFrame):
             self.region_data.remove_joint(joint_widget.joint_data)
 
         joint_widget.deleteLater()
+        self.main_window.sync_hierarchy_data()
 
     def remove_tree_item(self, tree_item):
+        # Preserve child rows (including joints owned by another region).
+        # Their parent IDs are synchronized after the removal completes.
+        tree = self.main_window.hierarchy_tree
+        for child in tree_item.takeChildren():
+            tree.addTopLevelItem(child)
         parent = tree_item.parent()
 
         if parent:

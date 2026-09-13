@@ -1,13 +1,27 @@
 import uuid
+from copy import deepcopy
 
 
 class JointData:
 
-    def __init__(self, name, parent=None, vertex_ids=None, uid=None):
+    AXES = ('X', 'Y', 'Z')
+
+    def __init__(self, name, parent=None, vertex_ids=None, uid=None,
+                 primary_axis='X', secondary_axis='Y'):
         self.uid = uid or str(uuid.uuid4())
         self.name = name
         self.parent = parent
         self.vertex_ids = vertex_ids or []
+        self.set_orientation(primary_axis, secondary_axis)
+
+    def set_orientation(self, primary_axis, secondary_axis):
+        """Store distinct local axes; this does not change a Maya scene node."""
+        if primary_axis not in self.AXES or secondary_axis not in self.AXES:
+            raise ValueError('Orientation axes must be X, Y or Z.')
+        if primary_axis == secondary_axis:
+            raise ValueError('Primary and secondary axes must be different.')
+        self.primary_axis = primary_axis
+        self.secondary_axis = secondary_axis
 
     @staticmethod
     def validate_name(name, all_joint_names=None):
@@ -42,6 +56,8 @@ class JointData:
             "name": self.name,
             "parent": self.parent,
             "vertex_ids": self.vertex_ids,
+            "primary_axis": self.primary_axis,
+            "secondary_axis": self.secondary_axis,
         }
 
     def from_dict(data):
@@ -50,6 +66,8 @@ class JointData:
             parent=data.get("parent"),
             vertex_ids=data.get("vertex_ids", []),
             uid=data.get("uid"),
+            primary_axis=data.get("primary_axis", "X"),
+            secondary_axis=data.get("secondary_axis", "Y"),
         )
 
 
@@ -59,6 +77,7 @@ class RegionData:
         self.uid = uid or str(uuid.uuid4())
         self.name = name
         self.joints = []
+        self.rig_guide = {'rig_type': None, 'builder_id': None, 'parameters': {}}
 
     def add_joint(self, name):
         joint = JointData(name)
@@ -77,10 +96,12 @@ class RegionData:
             "uid": self.uid,
             "name": self.name,
             "joints": [joint.to_dict() for joint in self.joints],
+            "rig_guide": deepcopy(self.rig_guide),
         }
 
     def from_dict(data):
         region = RegionData(name=data["name"], uid=data.get("uid"))
+        region.rig_guide = deepcopy(data.get("rig_guide", region.rig_guide))
         for joint_data in data.get("joints", []):
             region.joints.append(JointData.from_dict(joint_data))
         return region
@@ -88,10 +109,11 @@ class RegionData:
 
 class SkeletonData:
 
-    SCHEMA_VERSION = 2
+    SCHEMA_VERSION = 5
 
     def __init__(self, mesh=None):
         self.mesh = mesh
+        self.build_skeleton_only = False
         self.regions = []
 
     def add_region(self, name):
@@ -134,11 +156,13 @@ class SkeletonData:
             "schema_version": self.SCHEMA_VERSION,
             "tool": "skeleton_mapper",
             "mesh": self.mesh,
+            "build_skeleton_only": self.build_skeleton_only,
             "regions": [region.to_dict() for region in self.regions],
         }
 
     def from_dict(data):
         skeleton = SkeletonData(mesh=data.get("mesh"))
+        skeleton.build_skeleton_only = data.get("build_skeleton_only", False) is True
         for region_data in data.get("regions", []):
             skeleton.regions.append(RegionData.from_dict(region_data))
         return skeleton

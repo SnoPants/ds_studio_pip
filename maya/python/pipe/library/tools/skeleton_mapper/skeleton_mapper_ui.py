@@ -47,11 +47,18 @@ class SkeletonMapperUI(MayaUI):
         self.expand_all_button.clicked.connect(self.hierarchy_tree.expandAll)
         self.hierarchy_tree.itemExpanded.connect(self.sync_hierarchy_branch_expansion)
         self.hierarchy_tree.itemCollapsed.connect(self.sync_hierarchy_branch_expansion)
+        # QTreeWidget internal moves may emit remove/insert rather than move.
+        self._hierarchy_sync_pending = False
+        for signal in (self.hierarchy_tree.model().rowsMoved,
+                       self.hierarchy_tree.model().rowsInserted,
+                       self.hierarchy_tree.model().rowsRemoved):
+            signal.connect(self.schedule_hierarchy_sync)
         self.load_mapping_action.triggered.connect(self.load_mapping)
         self.save_mapping_action.triggered.connect(self.save_mapping)
         self.mirror_configuration_action.triggered.connect(self.open_mirror_configuration)
         self.mirror_region_button.clicked.connect(self.mirror_selected_region)
         self.build_button.clicked.connect(self.build_skeleton)
+        self.build_skeleton_only_checkbox.toggled.connect(self.set_build_skeleton_only)
 
     def find_widgets(self):
 
@@ -85,6 +92,39 @@ class SkeletonMapperUI(MayaUI):
         self.mirror_configuration_action = self.find_widget(QtCore.QObject,"mirror_configuration_action")
         self.mirror_region_button = self.find_widget(QtWidgets.QPushButton,"mirror_region_button")
         self.build_button = self.find_widget(QtWidgets.QPushButton,"build_button")
+        self.build_skeleton_only_checkbox = self.find_widget(QtWidgets.QCheckBox, "build_skeleton_only_checkbox")
+        self.build_skeleton_only_checkbox.setChecked(self.skeleton.build_skeleton_only)
+
+    def schedule_hierarchy_sync(self, *args):
+        # Wait until a drop has completed before reading parent relationships.
+        if not self._hierarchy_sync_pending:
+            self._hierarchy_sync_pending = True
+            QtCore.QTimer.singleShot(0, self.sync_hierarchy_data)
+
+    def sync_hierarchy_data(self):
+        self._hierarchy_sync_pending = False
+        if hasattr(self, 'ui') and self.ui is None:
+            return
+        joints = {joint.uid: joint for joint in self.skeleton.joints()}
+        root = self.hierarchy_tree.invisibleRootItem()
+        pending = [(root.child(index), None) for index in range(root.childCount())]
+        while pending:
+            item, parent_uid = pending.pop()
+            uid = item.data(0, QtCore.Qt.UserRole)
+            if uid in joints:
+                joints[uid].parent = parent_uid
+            pending.extend((item.child(index), uid) for index in range(item.childCount()))
+        self.refresh_rig_guides()
+
+    def set_build_skeleton_only(self, checked):
+        self.skeleton.build_skeleton_only = checked
+        self.refresh_rig_guides()
+
+    def refresh_rig_guides(self):
+        for index in range(self.region_layout.count()):
+            widget = self.region_layout.itemAt(index).widget()
+            if isinstance(widget, RegionWidget):
+                widget.rig_guide_widget.refresh_validation()
 
     def sync_hierarchy_branch_expansion(self, item):
         """Apply Shift-expand/collapse to every descendant of the clicked joint."""
@@ -175,6 +215,7 @@ class SkeletonMapperUI(MayaUI):
             self.selected_region_widget = None
 
         region_widget.deleteLater()
+        self.sync_hierarchy_data()
 
     def set_selected_region(self, region_widget):
         """Highlight one region and clear the previous highlight."""
@@ -241,20 +282,16 @@ class SkeletonMapperUI(MayaUI):
             ui_file.close()
 
         if self.mirror_settings_window is None:
-            raise RuntimeError(
-                "Failed to load UI file: {}".format(MIRROR_SETTINGS_UI_FILE)
-            )
+            raise RuntimeError("Failed to Load UI file: {}".format(MIRROR_SETTINGS_UI_FILE))
 
-        button_box = self.mirror_settings_window.findChild(
-            QtWidgets.QDialogButtonBox,
-            "mirror_settings_button_box"
-        )
+        self.mirror_settings_window.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+
+        button_box = self.mirror_settings_window.findChild(QtWidgets.QDialogButtonBox, "mirror_settings_button_box")
 
         button_box.accepted.connect(self.save_mirror_configuration)
         button_box.rejected.connect(self.close_mirror_configuration)
         self.mirror_settings_window.destroyed.connect(
-            self.mirror_configuration_destroyed
-        )
+        self.mirror_configuration_destroyed)
 
         self.populate_mirror_configuration()
         self.mirror_settings_window.show()
