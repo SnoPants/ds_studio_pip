@@ -113,7 +113,9 @@ class SkeletonData:
 
     def __init__(self, mesh=None):
         self.mesh = mesh
-        self.build_skeleton_only = False
+        # Default on while the skeleton builder is being finished; rig
+        # configuration is authored but not yet consumed by a builder.
+        self.build_skeleton_only = True
         self.regions = []
 
     def add_region(self, name):
@@ -151,6 +153,20 @@ class SkeletonData:
                 return joint
         return None
 
+    def find_joint_by_uid(self, uid):
+        for joint in self.joints():
+            if joint.uid == uid:
+                return joint
+        return None
+    
+    def parent_order(self):
+        joints = {j.uid: j for j in self.joints()}          # index once, not per-lookup
+        skeleton_hier = {}
+        for joint in joints.values():
+            skeleton_hier[(joint.uid, joint)] = (joint.parent, joints.get(joint.parent))
+        return skeleton_hier
+
+
     def to_dict(self):
         return {
             "schema_version": self.SCHEMA_VERSION,
@@ -162,7 +178,7 @@ class SkeletonData:
 
     def from_dict(data):
         skeleton = SkeletonData(mesh=data.get("mesh"))
-        skeleton.build_skeleton_only = data.get("build_skeleton_only", False) is True
+        skeleton.build_skeleton_only = data.get("build_skeleton_only", True) is True
         for region_data in data.get("regions", []):
             skeleton.regions.append(RegionData.from_dict(region_data))
         return skeleton

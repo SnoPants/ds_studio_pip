@@ -1,6 +1,6 @@
 import maya.cmds as cmds
 
-from pipe.library.tools.skeleton_mapper.skeleton_data import SkeletonData
+from pipe.library.rigging.skeleton_data import SkeletonData
 from pipe.library.tools.skeleton_mapper.skeleton_region import RegionWidget
 from pathlib import Path
 
@@ -125,6 +125,7 @@ class SkeletonMapperUI(MayaUI):
             widget = self.region_layout.itemAt(index).widget()
             if isinstance(widget, RegionWidget):
                 widget.rig_guide_widget.refresh_validation()
+                widget.update_rig_guide_visibility()
 
     def sync_hierarchy_branch_expansion(self, item):
         """Apply Shift-expand/collapse to every descendant of the clicked joint."""

@@ -7,7 +7,7 @@ See [ROADMAP.md](./ROADMAP.md) for current scope, implementation status, and the
 
 `skeleton_mapper` is a Maya tool for defining a reusable relationship between mesh vertices and skeleton joints. Artists will be able to organize joints into regions, assign vertices to each joint, validate the mapping, save or load it as JSON, and build a joint hierarchy from the stored data.
 
-The package should live inside the existing pipeline repo and remain self-contained until a component proves useful enough to promote into a shared library.
+The package should live inside the existing pipeline repo and remain self-contained until a component proves useful enough to promote into a shared library. The data model was the first component to meet that bar: it is Maya-free and Qt-free, describes a skeleton rather than a UI, and is needed by the builder. It now lives at `pipe/library/rigging/skeleton_data.py`, so `rigging/` never has to import from `tools/`.
 
 ## Hierarchy navigation
 
@@ -19,13 +19,20 @@ Click a joint's arrow to expand or collapse it normally. Hold **Shift** while cl
 skeleton_mapper/
 ├── __init__.py
 ├── ui.py
-├── model.py
-├── maya_utils.py
-├── builder.py
-├── validator.py
-├── io_utils.py
-└── README.md
-```
+├── maya_utils.py
+├── validator.py
+├── io_utils.py
+└── README.md
+```
+
+The data model and the builder live outside the tool, in the rigging library, so
+that non-UI callers can build a skeleton without importing `tools/`:
+
+```text
+pipe/library/rigging/
+├── skeleton_data.py   # promoted out of skeleton_mapper/
+└── skeleton_builder.py   # not yet written
+```
 
 ## Module responsibilities
 
@@ -36,7 +43,7 @@ skeleton_mapper/
 - Collect user intent and delegate work to the other modules.
 - Avoid embedding Maya scene operations, JSON handling, or skeleton-building logic.
 
-### `model.py`
+### `skeleton_data.py` (in `pipe/library/rigging/`)
 
 - Define the tool's Maya-independent data model, such as `MappingData`, `RegionData`, and `JointData`.
 - Store mesh identity once on `SkeletonData`, plus regions, joint names, parent relationships, and vertex IDs.
@@ -45,6 +52,7 @@ skeleton_mapper/
 - Expose `all_joint_names()` and `all_region_names()` so the UI can validate names without reaching across widgets.
 - Own the naming rules in `JointData.validate_name()`, which returns the reason a name is unusable or `""` when it is valid. `rename()` calls it internally and the UI calls it for feedback, so there is one implementation of the rules rather than one per caller.
 - Own the orientation configuration: a global default, with optional per-region overrides.
+- Own hierarchy traversal: `find_joint_by_uid()` and `build_order()`. The latter returns a skeleton-wide creation order, the child map, and any cycle or dangling-parent errors. It lives here rather than in the builder because the model owns the parent graph, and because this module imports only `uuid` and `copy` — so the order logic stays testable in plain Python, with no Maya session. Build order is skeleton-wide, never per-region, because parenting crosses regions.
 - Convert model objects to and from plain dictionaries when useful.
 - Contain no `maya.cmds` calls or Qt widgets.
 
@@ -56,7 +64,11 @@ skeleton_mapper/
 - Query vertex positions and calculate placement points, such as an average center.
 - Isolate Maya selection and scene-query behavior from the rest of the tool.
 
-### `builder.py`
+### `skeleton_builder.py` (in `pipe/library/rigging/`)
+
+Lives beside `skeleton_data.py` rather than in `rig_type/builders/`. The builders in
+that folder take joints as input and produce rig machinery; this one takes mapping
+data and produces the joints they consume, and it belongs to no single rig type.
 
 - Create joints from validated mapping data.
 - Calculate and apply joint positions from assigned vertices.

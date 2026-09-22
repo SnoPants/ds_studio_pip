@@ -1,6 +1,6 @@
 import maya.cmds as cmds
 
-from pipe.library.tools.skeleton_mapper.skeleton_data import JointData
+from pipe.library.rigging.skeleton_data import JointData
 from pipe.library.ui import QtCore, QtWidgets
 
 from pipe.library.rigging.rig_type.guide_registry import REGISTRY
@@ -121,7 +121,8 @@ class RigGuideWidget(QtWidgets.QWidget):
     def refresh_validation(self):
         skeleton = self.main_window.skeleton
         skeleton_only = skeleton.build_skeleton_only
-        self.setEnabled(not skeleton_only)
+        # Visibility is owned by RegionWidget, which also knows the collapsed
+        # state. This method only decides what the status label says.
         self.status.setVisible(not skeleton_only)
         if skeleton_only:
             # Clear stale validation labels and skip every builder validator.
@@ -496,12 +497,25 @@ class RegionWidget(QtWidgets.QFrame):
         self.delete_button.clicked.connect(self.request_delete)
         self.add_joint_button.clicked.connect(self.add_joint)
 
+        self.update_rig_guide_visibility()
+
     def toggle_region(self):
         visible = not self.joint_content.isVisible()
         self.joint_content.setVisible(visible)
-        self.rig_guide_widget.setVisible(visible)
+        self.update_rig_guide_visibility()
         self.expand_button.setText("▼" if visible else "▶")
         self.updateGeometry()
+
+    def update_rig_guide_visibility(self):
+        """Rig settings appear only when expanded and rig config is in scope.
+
+        Hidden rather than disabled so region rows stay compact while the
+        skeleton builder is being finished. Settings are retained either way.
+        """
+        self.rig_guide_widget.setVisible(
+            self.joint_content.isVisibleTo(self)
+            and not self.main_window.skeleton.build_skeleton_only
+        )
 
     def set_selected(self, selected):
         """Highlight or unhighlight this region."""
@@ -575,7 +589,7 @@ class RegionWidget(QtWidgets.QFrame):
 
         self.joint_content.show()
         self.expand_button.setText("▼")
-        self.rig_guide_widget.show()
+        self.update_rig_guide_visibility()
         self.main_window.sync_hierarchy_data()
         self.updateGeometry()
 
