@@ -156,6 +156,16 @@ def create_ds_shelve():
         height=32
     )
     
+    cmds.shelfButton(
+        command='from pipe.library.tools.shelves.items import influence_editor; influence_editor.run()',
+        annotation='Bulk zero or scale skin weights for pattern-matched influences (e.g. "Shoulder*").',
+        label='INF_EDT',
+        image= os.path.join(icon_path, r'shelf_icons\bozog_icons\Paint Weights.png'), # Use a built-in Maya icon, or provide a custom path
+        sourceType='python',
+        width=32,
+        height=32
+    )
+
     # Save the shelf layout so it persists across Maya sessions
     # Note: this saves the current configuration to a MEL file in user prefs
     shelf_dir = os.path.dirname(cmds.about(preferences=True)) + "/shelves"
