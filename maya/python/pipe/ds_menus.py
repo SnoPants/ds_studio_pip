@@ -166,6 +166,16 @@ def create_ds_shelve():
         height=32
     )
 
+    cmds.shelfButton(
+        command='from pipe.library.tools.shelves.items import skin_relay; skin_relay.run()',
+        annotation='Relay skin weights between two identical meshes by vertex ID, with L/R joint remapping.',
+        label='SKN_RLY',
+        image= os.path.join(icon_path, r'shelf_icons\bozog_icons\Component Editor.png'), # Use a built-in Maya icon, or provide a custom path
+        sourceType='python',
+        width=32,
+        height=32
+    )
+
     # Save the shelf layout so it persists across Maya sessions
     # Note: this saves the current configuration to a MEL file in user prefs
     shelf_dir = os.path.dirname(cmds.about(preferences=True)) + "/shelves"
