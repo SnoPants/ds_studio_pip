@@ -1,5 +1,6 @@
 import maya.cmds as cmds
 
+from pipe.library.rigging.ds_skeleton import Skeleton
 from pipe.library.rigging.skeleton_data import SkeletonData
 from pipe.library.tools.skeleton_mapper.skeleton_region import RegionWidget
 from pathlib import Path
@@ -250,7 +251,6 @@ class SkeletonMapperUI(MayaUI):
         print("TODO: Filter regions using: {}".format(text))
 
 
-
     def load_mapping(self):
         """Load Skeleton Mapper data from JSON."""
 
@@ -369,7 +369,17 @@ class SkeletonMapperUI(MayaUI):
     def build_skeleton(self):
         """Validate the mapping and build the Maya skeleton."""
 
-        print("TODO: Build skeleton.")
+        if not self.skeleton.mesh:
+            cmds.warning("Set a target mesh before building.")
+            return
+
+        if not list(self.skeleton.joints()):
+            cmds.warning("Add at leas one joint before building.")
+            return
+
+        skel = Skeleton(self.skeleton.mesh)
+        built = skel.build_skeleton(self.skeleton)
+        print(f"Built joints. {built}" )
 
     def on_close(self):
         """
