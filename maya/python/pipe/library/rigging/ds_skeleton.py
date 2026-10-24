@@ -53,7 +53,13 @@ class Skeleton:
     def parent_joints(self, skeleton):
         print(f"Parenting joints for skeleton: {self.skeleton_name}")
         # Implementation for parenting joints in Maya goes here
-        print(skeleton.parent_order)
+        print(skeleton.parent_order())
+        for (_, joint), (_, parent_joint) in skeleton.parent_order().items():
+            parent_name = parent_joint.name if parent_joint is not None else "World"
+            try:
+                cmds.parent(joint.name, parent_name)
+            except Exception as e:
+                cmds.warning(f"Failed to parent {joint.name} to {parent_name}: {e}")
 
     def orient_joints(self):
         print(f"Orienting joints for skeleton: {self.skeleton_name}")
