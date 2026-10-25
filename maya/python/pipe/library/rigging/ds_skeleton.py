@@ -25,6 +25,24 @@ class Skeleton:
 
         print(f"Creating joints for skeleton: {self.skeleton_name}")
 
+        def existing_joint_names():
+            joints_by_uid = {}
+
+            for node in cmds.ls(type="joint", long=True) or []:
+                if not cmds.attributeQuery("mapperUid", node=node, exists=True):
+                    continue
+
+                uid = cmds.getAttr(f"{node}.mapperUid")
+
+                if not uid:
+                    continue
+
+                if uid in joints_by_uid:
+                    raise ValueError(f"Duplicate mapperUid '{uid}': "f"{joints_by_uid[uid]} and {node}")
+                joints_by_uid[uid] = node
+
+            return joints_by_uid
+
         def joint_position(skeleton, joint):
 
             if not joint.vertex_ids:
@@ -38,10 +56,15 @@ class Skeleton:
         built = {}
 
         for joint in skeleton.joints():
+            node = existing_joint_names().get(joint.uid)
             position = joint_position(skeleton, joint)
-            cmds.select(clear= True)
-            node = create_joint(tags={"mapperUid": joint.uid})
-            node = cmds.rename(node, joint.name)
+
+            if node is None:
+                cmds.select(clear= True)
+                node = create_joint(tags={"mapperUid": joint.uid})
+                node = cmds.rename(node, joint.name)
+                existing_joint_names()[joint.uid] = node
+
             cmds.xform(node, worldSpace= True, translation= position)
 
             built[joint.uid] = node
@@ -51,9 +74,7 @@ class Skeleton:
         return built
 
     def parent_joints(self, skeleton):
-        print(f"Parenting joints for skeleton: {self.skeleton_name}")
-        # Implementation for parenting joints in Maya goes here
-        print(skeleton.parent_order())
+
         for (_, joint), (_, parent_joint) in skeleton.parent_order().items():
             parent_name = parent_joint.name if parent_joint is not None else "World"
             try:

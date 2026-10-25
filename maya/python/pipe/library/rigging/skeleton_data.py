@@ -7,12 +7,13 @@ class JointData:
     AXES = ('X', 'Y', 'Z')
 
     def __init__(self, name, parent=None, vertex_ids=None, uid=None,
-                 primary_axis='X', secondary_axis='Y'):
+                 primary_axis='X', secondary_axis='Y', orient_to_world=False):
         self.uid = uid or str(uuid.uuid4())
         self.name = name
         self.parent = parent
         self.vertex_ids = vertex_ids or []
         self.set_orientation(primary_axis, secondary_axis)
+        self.orient_to_world = bool(orient_to_world)
 
     def set_orientation(self, primary_axis, secondary_axis):
         """Store distinct local axes; this does not change a Maya scene node."""
@@ -58,6 +59,7 @@ class JointData:
             "vertex_ids": self.vertex_ids,
             "primary_axis": self.primary_axis,
             "secondary_axis": self.secondary_axis,
+            "orient_to_world": self.orient_to_world,
         }
 
     def from_dict(data):
@@ -68,6 +70,7 @@ class JointData:
             uid=data.get("uid"),
             primary_axis=data.get("primary_axis", "X"),
             secondary_axis=data.get("secondary_axis", "Y"),
+            orient_to_world=data.get("orient_to_world", False),
         )
 
 
@@ -109,7 +112,7 @@ class RegionData:
 
 class SkeletonData:
 
-    SCHEMA_VERSION = 5
+    SCHEMA_VERSION = 6
 
     def __init__(self, mesh=None):
         self.mesh = mesh
