@@ -157,24 +157,24 @@ def delete_node(node):
     if cmds.objExists(node):
         cmds.delete(node)
 
-def create_preview_joint():
-    return create_saved_curve("axis")
+def create_preview_joint(name):
+    return create_saved_curve("axis", name)
 
-def create_saved_curve(name=None):
+def create_saved_curve(curve_name=None, name="null"):
 
     with CURVES_JSON.open(encoding="utf-8") as file:
         data = json.load(file)
 
     controls = data['controls']
 
-    name = name.strip()
+    curve_name = curve_name.strip()
 
-    if name not in controls:
+    if curve_name not in controls:
         available = ', '.join(controls)
-        cmds.warning("Unknown control '{}'. Available controls: {}".format(name, available))
+        cmds.warning("Unknown control '{}'. Available controls: {}".format(curve_name, available))
         return None
     
-    curves = controls[name]['curves']
+    curves = controls[curve_name]['curves']
     if not curves:
         raise ValueError('This control contains no curve shapes.')
 
@@ -191,7 +191,7 @@ def create_saved_curve(name=None):
     cmds.undoInfo(openChunk=True, chunkName='Test saved curve')
 
     try:
-        control = cmds.createNode('transform', name=name + '_test')
+        control = cmds.createNode('transform', name=name)
         for index, curve in enumerate(curves, start=1):
             points = [[value * scale for value in point] for point in curve['points']]
             temporary = cmds.curve(
