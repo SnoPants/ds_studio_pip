@@ -1,5 +1,6 @@
 import maya.cmds as cmds
 
+from pipe.library.utilities.ds_maya_utils import get_centroid, create_preview_joint
 from pipe.library.rigging.skeleton_data import JointData
 from pipe.library.ui import QtCore, QtWidgets
 
@@ -608,6 +609,7 @@ class RegionWidget(QtWidgets.QFrame):
         self.update_rig_guide_visibility()
         self.main_window.sync_hierarchy_data()
         self.updateGeometry()
+        create_preview_joint()
 
     def remove_joint(self, joint_widget):
         self.remove_tree_item(joint_widget.tree_item)

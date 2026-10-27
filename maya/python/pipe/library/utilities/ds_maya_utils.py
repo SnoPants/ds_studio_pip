@@ -1,5 +1,22 @@
 import maya.cmds as cmds
+from maya.api import OpenMaya as om
 from pipe.library.utilities.validate.ds_validate import validate_chain
+
+from pathlib import Path
+import json
+
+LIBRARY_DIR = Path(__file__).resolve().parent.parent
+
+global CURVES_JSON
+CURVES_JSON = (
+    LIBRARY_DIR
+    / "rigging"
+    / "rig_type"
+    / "builders"
+    / "ds_nurbs_curves.json"
+)
+
+
 
 def get_selected_joints_hier(chain, start, end):
 
@@ -139,3 +156,66 @@ def is_ds_object(node):
 def delete_node(node):
     if cmds.objExists(node):
         cmds.delete(node)
+
+def create_preview_joint():
+    return create_saved_curve("axis")
+
+def create_saved_curve(name=None):
+
+    with CURVES_JSON.open(encoding="utf-8") as file:
+        data = json.load(file)
+
+    controls = data['controls']
+
+    name = name.strip()
+
+    if name not in controls:
+        available = ', '.join(controls)
+        cmds.warning("Unknown control '{}'. Available controls: {}".format(name, available))
+        return None
+    
+    curves = controls[name]['curves']
+    if not curves:
+        raise ValueError('This control contains no curve shapes.')
+
+    # The library stores centimetres; cmds.curve interprets numeric coordinates
+    # in the scene's current linear units.
+    
+    if data.get('units') != 'cm':
+        raise ValueError('Expected a curve library using cm units.')
+    
+    scale = om.MDistance(1.0, om.MDistance.kCentimeters).asUnits(om.MDistance.uiUnit())
+    previous_selection = cmds.ls(selection=True, long=True) or []
+    control = None
+    temporary = None
+    cmds.undoInfo(openChunk=True, chunkName='Test saved curve')
+
+    try:
+        control = cmds.createNode('transform', name=name + '_test')
+        for index, curve in enumerate(curves, start=1):
+            points = [[value * scale for value in point] for point in curve['points']]
+            temporary = cmds.curve(
+                degree=curve['degree'], point=points,
+                knot=curve['knots'], periodic=curve['periodic'],
+            )
+            shapes = cmds.listRelatives(temporary, shapes=True, fullPath=True) or []
+            for shape in shapes:
+                parented = cmds.parent(shape, control, shape=True, relative=True)[0]
+                cmds.rename(parented, '{}Shape{:02d}'.format(control, index))
+            cmds.delete(temporary)
+            temporary = None
+        cmds.select(control, replace=True)
+    except Exception:
+        for node in (temporary, control):
+            if node and cmds.objExists(node):
+                cmds.delete(node)
+        if previous_selection:
+            cmds.select(previous_selection, replace=True)
+        else:
+            cmds.select(clear=True)
+        raise
+    finally:
+        cmds.undoInfo(closeChunk=True)
+        
+    print("Created '{}' from library entry '{}' ({} shapes).".format(control, name, len(curves)))
+    return control
