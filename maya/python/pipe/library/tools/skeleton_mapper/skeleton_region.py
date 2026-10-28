@@ -175,6 +175,7 @@ class JointWidget(QtWidgets.QWidget):
         self.joint_data = joint_data
         self.main_window = main_window
         self.region_tag = region_tag
+        self.preview_joint = None
         # Keep the joint widget vertically compact
         self.setSizePolicy(
             QtWidgets.QSizePolicy.Expanding,
@@ -375,6 +376,12 @@ class JointWidget(QtWidgets.QWidget):
             self.clear_button.setEnabled(False)
 
     def set_vertices(self):
+
+        def set_preview_joint_position(vertices=None):
+            if self.preview_joint:
+                position = get_centroid(vertices)
+                cmds.xform(self.preview_joint, worldSpace=True, translation=position)
+
         target_mesh = self.main_window.skeleton.mesh
 
         if not target_mesh:
@@ -405,8 +412,10 @@ class JointWidget(QtWidgets.QWidget):
                     "Found '{}'.".format(target_mesh, vertex_mesh)
                 )
                 return
-
+            
             vertex_ids.append(int(vertex_id.rstrip("]")))
+
+        set_preview_joint_position([f"{target_mesh}.vtx[{index}]" for index in vertex_ids])
 
         self.joint_data.set_vertices(vertex_ids)
         self.update_display()
@@ -609,7 +618,7 @@ class RegionWidget(QtWidgets.QFrame):
         self.update_rig_guide_visibility()
         self.main_window.sync_hierarchy_data()
         self.updateGeometry()
-        create_preview_joint(joint_name)
+        joint_widget.preview_joint = create_preview_joint(joint_name)
 
     def remove_joint(self, joint_widget):
         self.remove_tree_item(joint_widget.tree_item)

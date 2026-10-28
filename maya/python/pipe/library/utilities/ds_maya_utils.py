@@ -191,7 +191,7 @@ def create_saved_curve(curve_name=None, name="null"):
     cmds.undoInfo(openChunk=True, chunkName='Test saved curve')
 
     try:
-        control = cmds.createNode('transform', name=name)
+        control = cmds.createNode('transform', name=f"{name}_PreviewJoint")
         for index, curve in enumerate(curves, start=1):
             points = [[value * scale for value in point] for point in curve['points']]
             temporary = cmds.curve(
@@ -204,7 +204,6 @@ def create_saved_curve(curve_name=None, name="null"):
                 cmds.rename(parented, '{}Shape{:02d}'.format(control, index))
             cmds.delete(temporary)
             temporary = None
-        cmds.select(control, replace=True)
     except Exception:
         for node in (temporary, control):
             if node and cmds.objExists(node):
