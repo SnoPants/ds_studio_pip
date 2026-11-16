@@ -158,9 +158,21 @@ def delete_node(node):
         cmds.delete(node)
 
 def create_preview_joint(name):
-    return create_saved_curve("axis", name)
+    control = create_saved_curve("axis", name)
+    if control:
+        for shape in cmds.listRelatives(control, shapes=True, fullPath=True) or []:
+            cmds.setAttr(f"{shape}.alwaysDrawOnTop", True)
+    return control
 
 def create_saved_curve(curve_name=None, name="null"):
+
+    def apply_curve_color(shape, color_name, palette):
+        if color_name is not None:
+            if color_name not in palette:
+                raise ValueError(f"Unknown curve colour '{color_name}'. Available: {', '.join(palette)}")
+            cmds.setAttr(f"{shape}.overrideEnabled", True)
+            cmds.setAttr(f"{shape}.overrideColor", palette[color_name])
+        return
 
     with CURVES_JSON.open(encoding="utf-8") as file:
         data = json.load(file)
@@ -171,7 +183,7 @@ def create_saved_curve(curve_name=None, name="null"):
 
     if curve_name not in controls:
         available = ', '.join(controls)
-        cmds.warning("Unknown control '{}'. Available controls: {}".format(curve_name, available))
+        cmds.warning(f"Unknown control '{curve_name}'. Available controls: {available}")
         return None
     
     curves = controls[curve_name]['curves']
@@ -201,7 +213,8 @@ def create_saved_curve(curve_name=None, name="null"):
             shapes = cmds.listRelatives(temporary, shapes=True, fullPath=True) or []
             for shape in shapes:
                 parented = cmds.parent(shape, control, shape=True, relative=True)[0]
-                cmds.rename(parented, '{}Shape{:02d}'.format(control, index))
+                renamed = cmds.rename(parented, f'{control}Shape{index:02d}')
+                apply_curve_color(renamed, curve.get('color'), data['colors'])
             cmds.delete(temporary)
             temporary = None
     except Exception:
@@ -216,5 +229,5 @@ def create_saved_curve(curve_name=None, name="null"):
     finally:
         cmds.undoInfo(closeChunk=True)
         
-    print("Created '{}' from library entry '{}' ({} shapes).".format(control, name, len(curves)))
+    print(f"Created '{control}' from library entry '{name}' ({len(curves)} shapes).")
     return control
