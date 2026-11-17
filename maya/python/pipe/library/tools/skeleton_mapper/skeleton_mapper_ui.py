@@ -3,6 +3,7 @@ import maya.cmds as cmds
 from pipe.library.rigging.ds_skeleton import Skeleton
 from pipe.library.rigging.skeleton_data import SkeletonData
 from pipe.library.tools.skeleton_mapper.skeleton_region import RegionWidget
+from pipe.library.utilities.ds_maya_utils import create_preview_joint_link
 from pathlib import Path
 
 from pipe.library.ui import MayaUI
@@ -96,6 +97,32 @@ class SkeletonMapperUI(MayaUI):
         self.build_skeleton_only_checkbox = self.find_widget(QtWidgets.QCheckBox, "build_skeleton_only_checkbox")
         self.build_skeleton_only_checkbox.setChecked(self.skeleton.build_skeleton_only)
 
+    def joint_widgets_by_uid(self):
+        joint_widgets = {}
+        for index in range(self.region_layout.count()):
+            widget = self.region_layout.itemAt(index).widget()
+            if isinstance(widget, RegionWidget):
+                for joint_widget in widget.joint_widgets:
+                    joint_widgets[joint_widget.joint_data.uid] = joint_widget
+        return joint_widgets
+
+    def sync_preview_links(self, tree_parents):
+        joint_widgets = self.joint_widgets_by_uid()
+        for joint_widget in joint_widgets.values():
+            parent_uid = tree_parents.get(joint_widget.joint_data.uid)
+            if joint_widget.preview_link and joint_widget.preview_link_parent == parent_uid:
+                continue
+            joint_widget.delete_preview_link()
+            parent_widget = joint_widgets.get(parent_uid)
+            if parent_widget is None or not parent_widget.preview_joint or not joint_widget.preview_joint:
+                continue
+            joint_widget.preview_link = create_preview_joint_link(
+                parent_widget.preview_joint, joint_widget.preview_joint)
+            joint_widget.preview_link_parent = parent_uid
+
+    def sync_preview_orients(self, tree_parents):
+        joint_widgets = self.joint_widgets_by_uid()
+
     def schedule_hierarchy_sync(self, *args):
         # Wait until a drop has completed before reading parent relationships.
         if not self._hierarchy_sync_pending:
@@ -109,13 +136,17 @@ class SkeletonMapperUI(MayaUI):
         joints = {joint.uid: joint for joint in self.skeleton.joints()}
         root = self.hierarchy_tree.invisibleRootItem()
         pending = [(root.child(index), None) for index in range(root.childCount())]
+        tree_parents = {}
         while pending:
             item, parent_uid = pending.pop()
             uid = item.data(0, QtCore.Qt.UserRole)
             if uid in joints:
                 joints[uid].parent = parent_uid
+                tree_parents[uid] = parent_uid
             pending.extend((item.child(index), uid) for index in range(item.childCount()))
         self.refresh_rig_guides()
+        self.sync_preview_links(tree_parents)
+        self.sync_preview_orients()
 
     def set_build_skeleton_only(self, checked):
         self.skeleton.build_skeleton_only = checked
@@ -144,7 +175,6 @@ class SkeletonMapperUI(MayaUI):
                 pending.extend(
                     current.child(index) for index in range(current.childCount())
                 )
-
 
     def is_mesh(self, name):
         """Return True if a node exists and has a mesh shape."""

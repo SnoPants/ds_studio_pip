@@ -176,6 +176,9 @@ class JointWidget(QtWidgets.QWidget):
         self.main_window = main_window
         self.region_tag = region_tag
         self.preview_joint = None
+        self.preview_link = None
+        self.preview_link_parent = None
+
         # Keep the joint widget vertically compact
         self.setSizePolicy(
             QtWidgets.QSizePolicy.Expanding,
@@ -248,24 +251,24 @@ class JointWidget(QtWidgets.QWidget):
         self.primary_axis_combo.setToolTip("Local primary axis. Primary and secondary must be different.")
         self.secondary_axis_combo = QtWidgets.QComboBox()
         self.secondary_axis_combo.setToolTip("Choose one of the two remaining local axes.")
-        self.orient_to_world_checkbox = QtWidgets.QCheckBox("Orient to world")
-        self.orient_to_world_checkbox.setToolTip(
-            "Use world space as the orientation reference. "
-            "Primary and secondary axes remain configurable."
+        self.orient_joint_checkbox = QtWidgets.QCheckBox("Orient Joint")
+        self.orient_joint_checkbox.setToolTip(
+            "Automatically orient the preview joint toward its child "
+            "in the Skeleton Hierarchy."
         )
         self.refresh_orientation_controls()
         orientation_form.addRow("Primary axis", self.primary_axis_combo)
         secondary_row = QtWidgets.QHBoxLayout()
         secondary_row.addWidget(self.secondary_axis_combo)
         secondary_row.addStretch()
-        secondary_row.addWidget(self.orient_to_world_checkbox)
+        secondary_row.addWidget(self.orient_joint_checkbox)
         orientation_form.addRow("Secondary axis", secondary_row)
         self.primary_axis_combo.setFixedWidth(90)
         self.secondary_axis_combo.setFixedWidth(90)
         vertex_layout.addWidget(self.orientation_group)
         self.primary_axis_combo.currentTextChanged.connect(self.update_primary_axis)
         self.secondary_axis_combo.currentTextChanged.connect(self.update_secondary_axis)
-        self.orient_to_world_checkbox.toggled.connect(self.update_orient_to_world)
+        self.orient_joint_checkbox.toggled.connect(self.update_orient_joint)
 
         self.vertices_group = QtWidgets.QGroupBox("Vertex IDs")
         vertices_form = QtWidgets.QVBoxLayout(self.vertices_group)
@@ -293,13 +296,15 @@ class JointWidget(QtWidgets.QWidget):
 
         self.update_display()
 
-    def update_orient_to_world(self, checked):
+    def update_orient_joint(self, checked):
         self.joint_data.orient_to_world = checked
         self.refresh_orientation_controls()
+        # Placeholder until the preview joint aim constraint is implemented.
+        print(f"Orient Joint {'on' if checked else 'off'}: {self.joint_data.name}")
 
     def refresh_orientation_controls(self):
-        with QtCore.QSignalBlocker(self.orient_to_world_checkbox):
-            self.orient_to_world_checkbox.setChecked(self.joint_data.orient_to_world)
+        with QtCore.QSignalBlocker(self.orient_joint_checkbox):
+            self.orient_joint_checkbox.setChecked(self.joint_data.orient_to_world)
         with QtCore.QSignalBlocker(self.primary_axis_combo):
             self.primary_axis_combo.setCurrentText(self.joint_data.primary_axis)
         with QtCore.QSignalBlocker(self.secondary_axis_combo):
@@ -419,6 +424,12 @@ class JointWidget(QtWidgets.QWidget):
 
         self.joint_data.set_vertices(vertex_ids)
         self.update_display()
+
+    def delete_preview_link(self):
+        if self.preview_link and cmds.objExists(self.preview_link):
+            cmds.delete(self.preview_link)
+        self.preview_link = None
+        self.preview_link_parent = None
 
     def select_vertices(self):
         mesh = self.main_window.skeleton.mesh
@@ -621,6 +632,7 @@ class RegionWidget(QtWidgets.QFrame):
         joint_widget.preview_joint = create_preview_joint(joint_name)
 
     def remove_joint(self, joint_widget):
+        joint_widget.delete_preview_link()
         self.remove_tree_item(joint_widget.tree_item)
 
         self.joint_layout.removeWidget(joint_widget)

@@ -165,10 +165,18 @@ def create_preview_joint(name):
     return control
 
 def create_preview_joint_link(parent, target):
-    curve = cmds.curve(degree=1, point=[(0, 0, 0), (0, 1, 0)], name="link_curve")
-    for index, target in enumerate((parent, target)):
+    curve = cmds.curve(degree=1, point=[(0, 0, 0), (0, 1, 0)], name=f"{target}_Link_Curve")
+    cmds.setAttr(f"{curve}.alwaysDrawOnTop", True)
+    group = cmds.group(curve, name=f"{target}_Link")
+    for index, driver in enumerate((parent, target)):
         cluster, handle = cmds.cluster(f"{curve}.cv[{index}]")
-        cmds.pointConstraint(target, handle)
+        cmds.parent(handle, group)
+        cmds.pointConstraint(driver, handle)
+    return group
+
+def create_preview_aimconstraint(parent, target):
+    
+    return
 
 def create_saved_curve(curve_name=None, name="null"):
 
