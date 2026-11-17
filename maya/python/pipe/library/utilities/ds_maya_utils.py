@@ -164,6 +164,12 @@ def create_preview_joint(name):
             cmds.setAttr(f"{shape}.alwaysDrawOnTop", True)
     return control
 
+def create_preview_joint_link(parent, target):
+    curve = cmds.curve(degree=1, point=[(0, 0, 0), (0, 1, 0)], name="link_curve")
+    for index, target in enumerate((parent, target)):
+        cluster, handle = cmds.cluster(f"{curve}.cv[{index}]")
+        cmds.pointConstraint(target, handle)
+
 def create_saved_curve(curve_name=None, name="null"):
 
     def apply_curve_color(shape, color_name, palette):
