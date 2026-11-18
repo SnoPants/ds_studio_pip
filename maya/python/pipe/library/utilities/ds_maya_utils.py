@@ -6,6 +6,7 @@ from pathlib import Path
 import json
 
 LIBRARY_DIR = Path(__file__).resolve().parent.parent
+AIM_AXIS_VECTORS = {'X': (1, 0, 0), 'Y': (0, 1, 0), 'Z': (0, 0, 1), '-X': (-1, 0, 0), '-Y': (0, -1, 0), '-Z': (0, 0, -1)}
 
 global CURVES_JSON
 CURVES_JSON = (
@@ -174,9 +175,9 @@ def create_preview_joint_link(parent, target):
         cmds.pointConstraint(driver, handle)
     return group
 
-def create_preview_aimconstraint(parent, target):
-    
-    return
+def create_preview_aimconstraint(parent, target, primary_axis, secondary_axis):
+
+    return cmds.aimConstraint(target, parent, aim= AIM_AXIS_VECTORS[primary_axis], upVector= AIM_AXIS_VECTORS[secondary_axis], wut="scene")[0]
 
 def create_saved_curve(curve_name=None, name="null"):
 

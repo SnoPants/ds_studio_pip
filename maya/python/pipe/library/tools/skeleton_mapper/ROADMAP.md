@@ -22,7 +22,7 @@ Mapping data remains the source of truth during authoring. A future builder shou
 - Complete skeleton validation and then build the skeleton end to end from the mapping.
 - Keep **Build skeleton only** as the path for working without rig configuration. It disables rig controls and skips builder validation while retaining their settings; skeleton validation will still be required when building is implemented.
 
-Current UI/model work includes stable joint IDs, tree-to-model parent synchronization, per-joint primary/secondary axes, region builder settings, and the skeleton-only toggle. Primary and secondary axes must be distinct X/Y/Z choices, defaulting to X/Y. Settings are included in dictionary serialization, but the Save/Load actions and actual Build operation remain placeholders. No Maya DAG updates or rig execution have been added as part of this UI work.
+Current UI/model work includes stable joint IDs, tree-to-model parent synchronization, per-joint primary/secondary axes, region builder settings, and the skeleton-only toggle. Primary and secondary axes are chosen from X/Y/Z/-X/-Y/-Z, must use different letters (X and -X conflict), and default to X/Y. Settings are included in dictionary serialization, but the Save/Load actions and actual Build operation remain placeholders. No Maya DAG updates or rig execution have been added as part of this UI work.
 
 ## Next: rig builders consume the skeleton
 

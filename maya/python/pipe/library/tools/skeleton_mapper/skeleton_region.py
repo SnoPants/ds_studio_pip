@@ -175,9 +175,12 @@ class JointWidget(QtWidgets.QWidget):
         self.joint_data = joint_data
         self.main_window = main_window
         self.region_tag = region_tag
+        # Maya preview nodes this joint owns; the sync system creates/deletes them.
         self.preview_joint = None
         self.preview_link = None
         self.preview_link_parent = None
+        self.preview_orient = None
+        self.preview_orient_key = None
 
         # Keep the joint widget vertically compact
         self.setSizePolicy(
@@ -299,8 +302,7 @@ class JointWidget(QtWidgets.QWidget):
     def update_orient_joint(self, checked):
         self.joint_data.orient_to_world = checked
         self.refresh_orientation_controls()
-        # Placeholder until the preview joint aim constraint is implemented.
-        print(f"Orient Joint {'on' if checked else 'off'}: {self.joint_data.name}")
+        self.main_window.sync_hierarchy_data()
 
     def refresh_orientation_controls(self):
         with QtCore.QSignalBlocker(self.orient_joint_checkbox):
@@ -309,22 +311,21 @@ class JointWidget(QtWidgets.QWidget):
             self.primary_axis_combo.setCurrentText(self.joint_data.primary_axis)
         with QtCore.QSignalBlocker(self.secondary_axis_combo):
             self.secondary_axis_combo.clear()
-            self.secondary_axis_combo.addItems([
-                axis for axis in JointData.AXES
-                if axis != self.joint_data.primary_axis
-            ])
+            self.secondary_axis_combo.addItems([axis for axis in JointData.AXES if axis.lstrip('-') != self.joint_data.primary_axis.lstrip('-')])
             self.secondary_axis_combo.setCurrentText(self.joint_data.secondary_axis)
 
     def update_primary_axis(self, axis):
         secondary = self.joint_data.secondary_axis
-        if secondary == axis:
+        if secondary.lstrip('-') == axis.lstrip('-'):
             # Swap roles when the new primary was the current secondary.
             secondary = self.joint_data.primary_axis
         self.joint_data.set_orientation(axis, secondary)
         self.refresh_orientation_controls()
+        self.main_window.sync_hierarchy_data()
 
     def update_secondary_axis(self, axis):
         self.joint_data.set_orientation(self.joint_data.primary_axis, axis)
+        self.main_window.sync_hierarchy_data()
 
     def toggle_vertex_panel(self):
         visible = not self.vertex_panel.isVisible()
@@ -430,6 +431,14 @@ class JointWidget(QtWidgets.QWidget):
             cmds.delete(self.preview_link)
         self.preview_link = None
         self.preview_link_parent = None
+
+    def delete_preview_orient(self):
+        if self.preview_orient and cmds.objExists(self.preview_orient):
+            cmds.delete(self.preview_orient)
+        if self.preview_joint and cmds.objExists(self.preview_joint):
+            cmds.setAttr(f"{self.preview_joint}.rotate", 0, 0, 0)
+        self.preview_orient = None
+        self.preview_orient_key = None
 
     def select_vertices(self):
         mesh = self.main_window.skeleton.mesh
@@ -627,12 +636,15 @@ class RegionWidget(QtWidgets.QFrame):
         self.joint_content.show()
         self.expand_button.setText("▼")
         self.update_rig_guide_visibility()
+        # Sync trigger: new joint. The tree signal also resyncs once this
+        # method returns, after preview_joint exists.
         self.main_window.sync_hierarchy_data()
         self.updateGeometry()
         joint_widget.preview_joint = create_preview_joint(joint_name)
 
     def remove_joint(self, joint_widget):
         joint_widget.delete_preview_link()
+        joint_widget.delete_preview_orient()
         self.remove_tree_item(joint_widget.tree_item)
 
         self.joint_layout.removeWidget(joint_widget)
@@ -644,6 +656,7 @@ class RegionWidget(QtWidgets.QFrame):
             self.region_data.remove_joint(joint_widget.joint_data)
 
         joint_widget.deleteLater()
+        # Sync trigger: removed joint; its children's links/aims are rebuilt.
         self.main_window.sync_hierarchy_data()
 
     def remove_tree_item(self, tree_item):

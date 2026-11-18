@@ -4,7 +4,7 @@ from copy import deepcopy
 
 class JointData:
 
-    AXES = ('X', 'Y', 'Z')
+    AXES = ('X', 'Y', 'Z', '-X', '-Y', '-Z')
 
     def __init__(self, name, parent=None, vertex_ids=None, uid=None,
                  primary_axis='X', secondary_axis='Y', orient_to_world=False):
@@ -18,8 +18,8 @@ class JointData:
     def set_orientation(self, primary_axis, secondary_axis):
         """Store distinct local axes; this does not change a Maya scene node."""
         if primary_axis not in self.AXES or secondary_axis not in self.AXES:
-            raise ValueError('Orientation axes must be X, Y or Z.')
-        if primary_axis == secondary_axis:
+            raise ValueError('Orientation axes must be a valid axis.')
+        if primary_axis.lstrip('-') == secondary_axis.lstrip('-'):
             raise ValueError('Primary and secondary axes must be different.')
         self.primary_axis = primary_axis
         self.secondary_axis = secondary_axis

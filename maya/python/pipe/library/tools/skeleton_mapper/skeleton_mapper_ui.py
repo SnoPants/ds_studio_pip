@@ -3,7 +3,7 @@ import maya.cmds as cmds
 from pipe.library.rigging.ds_skeleton import Skeleton
 from pipe.library.rigging.skeleton_data import SkeletonData
 from pipe.library.tools.skeleton_mapper.skeleton_region import RegionWidget
-from pipe.library.utilities.ds_maya_utils import create_preview_joint_link
+from pipe.library.utilities.ds_maya_utils import create_preview_joint_link, create_preview_aimconstraint
 from pathlib import Path
 
 from pipe.library.ui import MayaUI
@@ -49,6 +49,7 @@ class SkeletonMapperUI(MayaUI):
         self.expand_all_button.clicked.connect(self.hierarchy_tree.expandAll)
         self.hierarchy_tree.itemExpanded.connect(self.sync_hierarchy_branch_expansion)
         self.hierarchy_tree.itemCollapsed.connect(self.sync_hierarchy_branch_expansion)
+        # Sync trigger: any tree change (drag, add, remove) resyncs the hierarchy.
         # QTreeWidget internal moves may emit remove/insert rather than move.
         self._hierarchy_sync_pending = False
         for signal in (self.hierarchy_tree.model().rowsMoved,
@@ -97,6 +98,17 @@ class SkeletonMapperUI(MayaUI):
         self.build_skeleton_only_checkbox = self.find_widget(QtWidgets.QCheckBox, "build_skeleton_only_checkbox")
         self.build_skeleton_only_checkbox.setChecked(self.skeleton.build_skeleton_only)
 
+    # --- Preview sync system ---------------------------------------------------
+    # Keeps the Maya preview objects matching the UI. Anything that changes the
+    # hierarchy calls sync_hierarchy_data() (tree signals, add/remove joint,
+    # remove region). It walks the Skeleton Hierarchy tree into tree_parents
+    # {child_uid: parent_uid}, then hands that to each sync_preview_* function.
+    # Each one compares what should exist with what its JointWidget built last
+    # time, and only deletes/rebuilds where they differ, so syncing often is
+    # safe. Uids connect the tree, the data, and the widgets; the Maya nodes are
+    # stored on the JointWidget and never looked up by name.
+
+    # uid -> JointWidget, so a uid from the tree can reach its preview nodes.
     def joint_widgets_by_uid(self):
         joint_widgets = {}
         for index in range(self.region_layout.count()):
@@ -106,6 +118,8 @@ class SkeletonMapperUI(MayaUI):
                     joint_widgets[joint_widget.joint_data.uid] = joint_widget
         return joint_widgets
 
+    # Child owns a link curve to its tree parent. preview_link_parent records
+    # which parent it was built for, so unchanged links are skipped.
     def sync_preview_links(self, tree_parents):
         joint_widgets = self.joint_widgets_by_uid()
         for joint_widget in joint_widgets.values():
@@ -120,8 +134,27 @@ class SkeletonMapperUI(MayaUI):
                 parent_widget.preview_joint, joint_widget.preview_joint)
             joint_widget.preview_link_parent = parent_uid
 
+    # Parent owns an aim constraint at its tree child when Orient Joint is on.
     def sync_preview_orients(self, tree_parents):
         joint_widgets = self.joint_widgets_by_uid()
+        tree_children = {}
+        for child_uid, parent_uid  in tree_parents.items():
+            tree_children.setdefault(parent_uid, []).append(child_uid)
+        for uid, joint_widget in joint_widgets.items():
+            joint_data = joint_widget.joint_data
+            children = tree_children.get(uid, [])
+            child_uid = children[0] if children else None
+            key = None
+            if joint_data.orient_to_world and child_uid:
+                key = (child_uid, joint_data.primary_axis, joint_data.secondary_axis)
+            if joint_widget.preview_orient_key == key:
+                continue
+            joint_widget.delete_preview_orient()
+            child_widget = joint_widgets.get(child_uid)
+            if key is None or child_widget is None or not joint_widget.preview_joint or not child_widget.preview_joint:
+                continue
+            joint_widget.preview_orient = create_preview_aimconstraint(joint_widget.preview_joint, child_widget.preview_joint, joint_data.primary_axis, joint_data.secondary_axis)
+            joint_widget.preview_orient_key = key
 
     def schedule_hierarchy_sync(self, *args):
         # Wait until a drop has completed before reading parent relationships.
@@ -129,24 +162,26 @@ class SkeletonMapperUI(MayaUI):
             self._hierarchy_sync_pending = True
             QtCore.QTimer.singleShot(0, self.sync_hierarchy_data)
 
+    # Sync entry point. Reads the tree, updates JointData.parent, then runs
+    # each sync_preview_* step with the same tree_parents.
     def sync_hierarchy_data(self):
-        self._hierarchy_sync_pending = False
+        self._hierarchy_sync_pending = False                                         # 1. Clear flag; stop if window is closing.
         if hasattr(self, 'ui') and self.ui is None:
             return
-        joints = {joint.uid: joint for joint in self.skeleton.joints()}
-        root = self.hierarchy_tree.invisibleRootItem()
-        pending = [(root.child(index), None) for index in range(root.childCount())]
-        tree_parents = {}
+        joints = {joint.uid: joint for joint in self.skeleton.joints()}              # 2. uid -> JointData.
+        root = self.hierarchy_tree.invisibleRootItem()                               # 3. Walk the tree.
+        pending = [(root.child(index), None) for index in range(root.childCount())]  # (item, parent_uid); None at top.
+        tree_parents = {}                                                            # Built here: {child_uid: parent_uid}, used by 5 and 6.
         while pending:
             item, parent_uid = pending.pop()
             uid = item.data(0, QtCore.Qt.UserRole)
             if uid in joints:
                 joints[uid].parent = parent_uid
-                tree_parents[uid] = parent_uid
+                tree_parents[uid] = parent_uid                                       # One entry per joint in the tree.
             pending.extend((item.child(index), uid) for index in range(item.childCount()))
-        self.refresh_rig_guides()
-        self.sync_preview_links(tree_parents)
-        self.sync_preview_orients()
+        self.refresh_rig_guides()                                                    # 4. Rig guide UI.
+        self.sync_preview_links(tree_parents)                                        # 5. Link curves.
+        self.sync_preview_orients(tree_parents)                                      # 6. Aim constraints.
 
     def set_build_skeleton_only(self, checked):
         self.skeleton.build_skeleton_only = checked
@@ -247,6 +282,7 @@ class SkeletonMapperUI(MayaUI):
             self.selected_region_widget = None
 
         region_widget.deleteLater()
+        # Sync trigger: the region's joints left the hierarchy.
         self.sync_hierarchy_data()
 
     def set_selected_region(self, region_widget):
