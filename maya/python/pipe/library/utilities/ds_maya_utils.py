@@ -163,17 +163,31 @@ def create_preview_joint(name):
     if control:
         for shape in cmds.listRelatives(control, shapes=True, fullPath=True) or []:
             cmds.setAttr(f"{shape}.alwaysDrawOnTop", True)
-    return control
+    return add_to_preview_grp(control)
 
 def create_preview_joint_link(parent, target):
     curve = cmds.curve(degree=1, point=[(0, 0, 0), (0, 1, 0)], name=f"{target}_Link_Curve")
     cmds.setAttr(f"{curve}.alwaysDrawOnTop", True)
+    cmds.setAttr(f"{curve}.overrideEnabled", True)
+    cmds.setAttr(f"{curve}.overrideDisplayType", 2)
     group = cmds.group(curve, name=f"{target}_Link")
+    curve = cmds.listRelatives(group, children=True, fullPath=True)[0]
     for index, driver in enumerate((parent, target)):
         cluster, handle = cmds.cluster(f"{curve}.cv[{index}]")
+        
         cmds.parent(handle, group)
         cmds.pointConstraint(driver, handle)
-    return group
+
+    return add_to_preview_grp(group)
+
+def add_to_preview_grp(obj):
+
+    preview_group = "|PreviewGroup"
+    if cmds.objExists(preview_group) == False:
+        preview_group = cmds.group(empty= True, name= preview_group)
+        preview_group = cmds.ls(preview_group, long = True)[0]
+
+    return cmds.parent(obj, preview_group)[0]
 
 def create_preview_aimconstraint(parent, target, primary_axis, secondary_axis):
 
