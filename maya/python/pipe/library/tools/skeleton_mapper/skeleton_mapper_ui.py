@@ -3,7 +3,7 @@ import maya.cmds as cmds
 from pipe.library.rigging.ds_skeleton import Skeleton
 from pipe.library.rigging.skeleton_data import SkeletonData
 from pipe.library.tools.skeleton_mapper.skeleton_region import RegionWidget
-from pipe.library.utilities.ds_maya_utils import create_preview_joint_link, create_preview_aimconstraint
+from pipe.library.utilities.ds_maya_utils import create_preview_joint_link, create_preview_aimconstraint, node_uuid, node_path, world_rotation
 from pathlib import Path
 
 from pipe.library.ui import MayaUI
@@ -17,6 +17,7 @@ MIRROR_SETTINGS_UI_FILE = (PACKAGE_DIR / "ui" / "mirror_settings.ui")
 class SkeletonMapperUI(MayaUI):
     UI_FILE = UI_FILE
     OBJECT_NAME = "DSSkeletonMapperWindow"
+    DOCKABLE = True
 
     def __init__(self, parent=None):
         self.skeleton = SkeletonData()
@@ -124,14 +125,14 @@ class SkeletonMapperUI(MayaUI):
         joint_widgets = self.joint_widgets_by_uid()
         for joint_widget in joint_widgets.values():
             parent_uid = tree_parents.get(joint_widget.joint_data.uid)
-            if joint_widget.preview_link and joint_widget.preview_link_parent == parent_uid:
+            if node_path(joint_widget.preview_link) and joint_widget.preview_link_parent == parent_uid:
                 continue
             joint_widget.delete_preview_link()
             parent_widget = joint_widgets.get(parent_uid)
-            if parent_widget is None or not parent_widget.preview_joint or not joint_widget.preview_joint:
+            if parent_widget is None or not parent_widget.preview_path() or not joint_widget.preview_path():
                 continue
-            joint_widget.preview_link = create_preview_joint_link(
-                parent_widget.preview_joint, joint_widget.preview_joint)
+            joint_widget.preview_link = node_uuid(create_preview_joint_link(
+                parent_widget.preview_path(), joint_widget.preview_path()))
             joint_widget.preview_link_parent = parent_uid
 
     # Parent owns an aim constraint at its tree child when Orient Joint is on.
@@ -145,15 +146,15 @@ class SkeletonMapperUI(MayaUI):
             children = tree_children.get(uid, [])
             child_uid = children[0] if children else None
             key = None
-            if joint_data.orient_to_world and child_uid:
+            if joint_data.orient_to_child and child_uid:
                 key = (child_uid, joint_data.primary_axis, joint_data.secondary_axis)
             if joint_widget.preview_orient_key == key:
                 continue
             joint_widget.delete_preview_orient()
             child_widget = joint_widgets.get(child_uid)
-            if key is None or child_widget is None or not joint_widget.preview_joint or not child_widget.preview_joint:
+            if key is None or child_widget is None or not joint_widget.preview_path() or not child_widget.preview_path():
                 continue
-            joint_widget.preview_orient = create_preview_aimconstraint(joint_widget.preview_joint, child_widget.preview_joint, joint_data.primary_axis, joint_data.secondary_axis)
+            joint_widget.preview_orient = node_uuid(create_preview_aimconstraint(joint_widget.preview_path(), child_widget.preview_path(), joint_data.primary_axis, joint_data.secondary_axis))
             joint_widget.preview_orient_key = key
 
     def schedule_hierarchy_sync(self, *args):
@@ -166,7 +167,7 @@ class SkeletonMapperUI(MayaUI):
     # each sync_preview_* step with the same tree_parents.
     def sync_hierarchy_data(self):
         self._hierarchy_sync_pending = False                                         # 1. Clear flag; stop if window is closing.
-        if hasattr(self, 'ui') and self.ui is None:
+        if self.closed or (hasattr(self, 'ui') and self.ui is None):
             return
         joints = {joint.uid: joint for joint in self.skeleton.joints()}              # 2. uid -> JointData.
         root = self.hierarchy_tree.invisibleRootItem()                               # 3. Walk the tree.
@@ -221,19 +222,17 @@ class SkeletonMapperUI(MayaUI):
         """Validate a mesh name and store it on the model. True if accepted."""
         if not self.is_mesh(name):
             cmds.warning(
-                "'{}' is not a mesh. Please choose a valid mesh.".format(name)
+                f"'{name}' is not a mesh. Please choose a valid mesh."
             )
             return False
 
-        # Vertex IDs are indices into the old mesh, so they do not carry over.
+        # Positions were placed on the old mesh, so they may not fit the new one.
         if self.skeleton.mesh and name != self.skeleton.mesh:
-            assigned = sum(1 for joint in self.skeleton.joints() if joint.vertex_ids)
+            assigned = sum(1 for joint in self.skeleton.joints() if joint.position is not None)
             if assigned:
                 cmds.warning(
-                    "Target mesh changed to '{}'. {} joint(s) still hold vertex "
-                    "IDs from '{}' and should be reassigned.".format(
-                        name, assigned, self.skeleton.mesh
-                    )
+                    f"Target mesh changed to '{name}'. {assigned} joint(s) were placed on "
+                    f"'{self.skeleton.mesh}' and may need repositioning."
                 )
 
         self.skeleton.mesh = name
@@ -267,10 +266,10 @@ class SkeletonMapperUI(MayaUI):
         existing_names = self.skeleton.all_region_names()
 
         index = len(self.skeleton.regions) + 1
-        name = "Region_{}".format(index)
+        name = f"Region_{index}"
         while name in existing_names:
             index += 1
-            name = "Region_{}".format(index)
+            name = f"Region_{index}"
         return name
 
     def remove_region(self, region_widget):
@@ -314,7 +313,7 @@ class SkeletonMapperUI(MayaUI):
     def filter_regions(self, text):
         """Filter the displayed regions."""
 
-        print("TODO: Filter regions using: {}".format(text))
+        print(f"TODO: Filter regions using: {text}")
 
 
     def load_mapping(self):
@@ -339,7 +338,7 @@ class SkeletonMapperUI(MayaUI):
 
         if not ui_file.open(QtCore.QFile.ReadOnly):
             raise RuntimeError(
-                "Cannot open UI file: {}".format(MIRROR_SETTINGS_UI_FILE)
+                f"Cannot open UI file: {MIRROR_SETTINGS_UI_FILE}"
             )
 
         try:
@@ -349,7 +348,7 @@ class SkeletonMapperUI(MayaUI):
             ui_file.close()
 
         if self.mirror_settings_window is None:
-            raise RuntimeError("Failed to Load UI file: {}".format(MIRROR_SETTINGS_UI_FILE))
+            raise RuntimeError(f"Failed to Load UI file: {MIRROR_SETTINGS_UI_FILE}")
 
         self.mirror_settings_window.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
 
@@ -443,6 +442,13 @@ class SkeletonMapperUI(MayaUI):
             cmds.warning("Add at leas one joint before building.")
             return
 
+        # Build where the previews are, even if a move slipped past the callback.
+        for joint_widget in self.joint_widgets_by_uid().values():
+            path = joint_widget.preview_path()
+            if path:
+                joint_widget.joint_data.set_position(cmds.xform(path, query=True, worldSpace=True, translation=True))
+                joint_widget.joint_data.set_rotation(world_rotation(path))
+
         skel = Skeleton(self.skeleton.mesh)
         built = skel.build_skeleton(self.skeleton)
         print(f"Built joints. {built}" )
@@ -451,10 +457,18 @@ class SkeletonMapperUI(MayaUI):
         """
         Perform Skeleton Mapper-specific cleanup.
 
-        Add Maya callback or scriptJob cleanup here later.
+        Previews and their move callbacks belong to this window, so none are
+        left in the scene once it closes.
         """
 
         self.close_mirror_configuration()
+        for joint_widget in self.joint_widgets_by_uid().values():
+            joint_widget.delete_previews()
+        for group in ("|PreviewGroup|PreviewJoints", "|PreviewGroup|PreviewLinks"):
+            if cmds.objExists(group) and not cmds.listRelatives(group, children=True):
+                cmds.delete(group)
+        if cmds.objExists("|PreviewGroup") and not cmds.listRelatives("|PreviewGroup", children=True):
+            cmds.delete("|PreviewGroup")
         self.skeleton = SkeletonData()
 
 _window = None

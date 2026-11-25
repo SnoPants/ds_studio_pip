@@ -1,8 +1,9 @@
 import maya.cmds as cmds
+from maya.api import OpenMaya as om
 
-from pipe.library.utilities.ds_maya_utils import get_centroid, create_preview_joint
+from pipe.library.utilities.ds_maya_utils import get_centroid, create_preview_joint, node_uuid, node_path
 from pipe.library.rigging.skeleton_data import JointData
-from pipe.library.ui import QtCore, QtWidgets
+from pipe.library.ui import QtCore, QtGui, QtWidgets
 
 from pipe.library.rigging.rig_type.guide_registry import REGISTRY
 
@@ -141,7 +142,7 @@ class RigGuideWidget(QtWidgets.QWidget):
             if spec is None or spec.rig_type != self.type_combo.currentData():
                 continue
             check = spec.validate(self.region_data, skeleton, self._values(spec))
-            self.builder_combo.setItemText(index, '{} — {}'.format(spec.label, 'Valid' if check.valid else 'Invalid'))
+            self.builder_combo.setItemText(index, f'{spec.label} — {"Valid" if check.valid else "Invalid"}')
             self.builder_combo.setItemData(index, '\n'.join(check.errors) or 'Region hierarchy is compatible.', QtCore.Qt.ToolTipRole)
             if spec.id == selected:
                 result = check
@@ -158,7 +159,21 @@ class RigGuideWidget(QtWidgets.QWidget):
             message = 'Invalid: ' + '\n'.join(result.errors)
             color = '#e08080'
         self.status.setText(message)
-        self.status.setStyleSheet('color: {};'.format(color))
+        self.status.setStyleSheet(f'color: {color};')
+
+
+class PositionValidator(QtGui.QDoubleValidator):
+    """Numbers only; blank or unfinished input falls back to the last shown value."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setLocale(QtCore.QLocale.c())
+        self.setNotation(QtGui.QDoubleValidator.StandardNotation)
+        self.last_value = ""
+
+    def fixup(self, text):
+        # Qt calls this on Enter/focus-out when the text isn't a valid number.
+        return self.last_value
 
 
 class JointWidget(QtWidgets.QWidget):
@@ -175,8 +190,12 @@ class JointWidget(QtWidgets.QWidget):
         self.joint_data = joint_data
         self.main_window = main_window
         self.region_tag = region_tag
-        # Maya preview nodes this joint owns; the sync system creates/deletes them.
+        # Maya preview nodes this joint owns, stored as UUIDs so scene renames
+        # can't lose them. The sync system creates/deletes them.
         self.preview_joint = None
+        self.preview_name = None
+        self.preview_callback = None
+        self.placing_preview = False
         self.preview_link = None
         self.preview_link_parent = None
         self.preview_orient = None
@@ -208,26 +227,16 @@ class JointWidget(QtWidgets.QWidget):
         self.name_field.setPlaceholderText("Joint Name")
         self.name_field.setMinimumWidth(120)
 
-        self.count_label = QtWidgets.QLabel("0 verts")
-        self.count_label.setMinimumWidth(55)
-
         # Create buttons
         self.set_button = QtWidgets.QPushButton("Set")
-        self.select_button = QtWidgets.QPushButton("Select")
-        self.clear_button = QtWidgets.QPushButton("Clear")
         self.delete_button = QtWidgets.QPushButton("Delete")
 
         self.set_button.setFixedWidth(52)
-        self.select_button.setFixedWidth(52)
-        self.clear_button.setFixedWidth(52)
         self.delete_button.setFixedWidth(55)
 
         joint_layout.addWidget(self.expand_button)
         joint_layout.addWidget(self.name_field, 1)
-        joint_layout.addWidget(self.count_label)
         joint_layout.addWidget(self.set_button)
-        joint_layout.addWidget(self.select_button)
-        joint_layout.addWidget(self.clear_button)
         joint_layout.addWidget(self.delete_button)
 
         main_layout.addWidget(joint_row)
@@ -273,15 +282,23 @@ class JointWidget(QtWidgets.QWidget):
         self.secondary_axis_combo.currentTextChanged.connect(self.update_secondary_axis)
         self.orient_joint_checkbox.toggled.connect(self.update_orient_joint)
 
-        self.vertices_group = QtWidgets.QGroupBox("Vertex IDs")
-        vertices_form = QtWidgets.QVBoxLayout(self.vertices_group)
-        vertices_form.setContentsMargins(12, 18, 12, 12)
-        self.vertex_text = QtWidgets.QPlainTextEdit()
-        self.vertex_text.setReadOnly(True)
-        self.vertex_text.setFixedHeight(50)
+        self.position_group = QtWidgets.QGroupBox("Position")
+        position_form = QtWidgets.QFormLayout(self.position_group)
+        position_form.setContentsMargins(12, 18, 12, 12)
+        position_row = QtWidgets.QHBoxLayout()
+        self.position_fields = []
+        for index, axis in enumerate("XYZ"):
+            field = QtWidgets.QLineEdit()
+            field.setValidator(PositionValidator(field))
+            field.editingFinished.connect(lambda index=index: self.update_position(index))
+            position_row.addWidget(QtWidgets.QLabel(axis))
+            position_row.addWidget(field)
+            self.position_fields.append(field)
+        self.position_source_label = QtWidgets.QLabel()
 
-        vertices_form.addWidget(self.vertex_text)
-        vertex_layout.addWidget(self.vertices_group)
+        position_form.addRow(position_row)
+        position_form.addRow("Source", self.position_source_label)
+        vertex_layout.addWidget(self.position_group)
 
         self.vertex_panel.hide()
         main_layout.addWidget(self.vertex_panel)
@@ -293,20 +310,18 @@ class JointWidget(QtWidgets.QWidget):
         self.name_field.textChanged.connect(self.update_joint_name)
         self.name_field.editingFinished.connect(self.finalize_joint_name)
         self.set_button.clicked.connect(self.set_vertices)
-        self.select_button.clicked.connect(self.select_vertices)
-        self.clear_button.clicked.connect(self.clear_vertices)
         self.delete_button.clicked.connect(self.request_delete)
 
         self.update_display()
 
     def update_orient_joint(self, checked):
-        self.joint_data.orient_to_world = checked
+        self.joint_data.orient_to_child = checked
         self.refresh_orientation_controls()
         self.main_window.sync_hierarchy_data()
 
     def refresh_orientation_controls(self):
         with QtCore.QSignalBlocker(self.orient_joint_checkbox):
-            self.orient_joint_checkbox.setChecked(self.joint_data.orient_to_world)
+            self.orient_joint_checkbox.setChecked(self.joint_data.orient_to_child)
         with QtCore.QSignalBlocker(self.primary_axis_combo):
             self.primary_axis_combo.setCurrentText(self.joint_data.primary_axis)
         with QtCore.QSignalBlocker(self.secondary_axis_combo):
@@ -358,6 +373,7 @@ class JointWidget(QtWidgets.QWidget):
 
     def finalize_joint_name(self):
         if not self.name_error(self.name_field.text()):
+            self.rename_preview()
             return
 
         self.name_field.blockSignals(True)
@@ -367,27 +383,27 @@ class JointWidget(QtWidgets.QWidget):
         self.name_field.setToolTip("")
 
     def update_display(self):
-        vertex_ids = self.joint_data.vertex_ids
-        self.count_label.setText("{} verts".format(len(vertex_ids)))
+        position = self.joint_data.position
 
-        if vertex_ids:
-            self.vertex_text.setPlainText(
-                ", ".join(str(vertex_id) for vertex_id in vertex_ids)
-            )
-            self.select_button.setEnabled(True)
-            self.clear_button.setEnabled(True)
-        else:
-            self.vertex_text.setPlainText("No vertices assigned.")
-            self.select_button.setEnabled(False)
-            self.clear_button.setEnabled(False)
+        for field, value in zip(self.position_fields, position or (0.0, 0.0, 0.0)):
+            with QtCore.QSignalBlocker(field):
+                field.setText(f"{value:.3f}")
+            field.validator().last_value = field.text()
+
+        self.position_source_label.setText("Placed" if position is not None else "Not placed")
+
+    def update_position(self, index):
+        field = self.position_fields[index]
+        # Unchanged or restored text keeps the exact stored value, not the 3-decimal display.
+        if field.text() == field.validator().last_value:
+            return
+        position = list(self.joint_data.position or (0.0, 0.0, 0.0))
+        position[index] = float(field.text())
+        self.joint_data.set_position(position)
+        self.place_preview(position)
+        self.update_display()
 
     def set_vertices(self):
-
-        def set_preview_joint_position(vertices=None):
-            if self.preview_joint:
-                position = get_centroid(vertices)
-                cmds.xform(self.preview_joint, worldSpace=True, translation=position)
-
         target_mesh = self.main_window.skeleton.mesh
 
         if not target_mesh:
@@ -414,49 +430,102 @@ class JointWidget(QtWidgets.QWidget):
             # Vertex IDs only index the target mesh, so foreign ones are garbage.
             if vertex_mesh != target_mesh:
                 cmds.warning(
-                    "Vertices must come from the target mesh '{}'. "
-                    "Found '{}'.".format(target_mesh, vertex_mesh)
+                    f"Vertices must come from the target mesh '{target_mesh}'. "
+                    f"Found '{vertex_mesh}'."
                 )
                 return
             
             vertex_ids.append(int(vertex_id.rstrip("]")))
 
-        set_preview_joint_position([f"{target_mesh}.vtx[{index}]" for index in vertex_ids])
+        position = get_centroid([f"{target_mesh}.vtx[{index}]" for index in vertex_ids])
 
-        self.joint_data.set_vertices(vertex_ids)
+        # Only the centroid is kept; the vertices just pick the spot.
+        self.joint_data.set_position(position)
+        self.place_preview(position)
         self.update_display()
 
+    def preview_path(self):
+        return node_path(self.preview_joint)
+
+    def create_preview(self):
+        self.preview_joint = node_uuid(create_preview_joint(self.joint_data.name))
+        self.preview_name = self.joint_data.name
+        if self.joint_data.position is not None:
+            self.place_preview(self.joint_data.position)
+        self.add_preview_callback()
+
+    def place_preview(self, position):
+        path = self.preview_path()
+        if not path:
+            return
+        # Flagged so the move callback can tell the tool's moves from the user's.
+        self.placing_preview = True
+        try:
+            cmds.xform(path, worldSpace=True, translation=position)
+        finally:
+            self.placing_preview = False
+
+    def add_preview_callback(self):
+        selection = om.MSelectionList()
+        selection.add(self.preview_path())
+        self.preview_callback = om.MNodeMessage.addAttributeChangedCallback(
+            selection.getDependNode(0), self.preview_attribute_changed)
+
+    def remove_preview_callback(self):
+        if self.preview_callback is not None:
+            om.MMessage.removeCallback(self.preview_callback)
+        self.preview_callback = None
+
+    def preview_attribute_changed(self, message, plug, other_plug, client_data):
+        if self.placing_preview or not message & om.MNodeMessage.kAttributeSet:
+            return
+        # Only translation is a placement; the aim constraint drives rotation.
+        if not plug.partialName(useLongNames=True).startswith("translate"):
+            return
+        position = cmds.xform(self.preview_path(), query=True, worldSpace=True, translation=True)
+        self.joint_data.set_position(position)
+        self.update_display()
+
+    def rename_preview(self):
+        path = self.preview_path()
+        if not path or self.preview_name == self.joint_data.name:
+            return
+        cmds.rename(path, f"{self.joint_data.name}_PreviewJoint")
+        self.preview_name = self.joint_data.name
+        # The link is named after this joint, so rebuild it under the new name.
+        self.delete_preview_link()
+        self.main_window.sync_hierarchy_data()
+
     def delete_preview_link(self):
-        if self.preview_link and cmds.objExists(self.preview_link):
-            cmds.delete(self.preview_link)
+        link = node_path(self.preview_link)
+        if link:
+            cmds.delete(link)
         self.preview_link = None
         self.preview_link_parent = None
 
     def delete_preview_orient(self):
-        if self.preview_orient and cmds.objExists(self.preview_orient):
-            cmds.delete(self.preview_orient)
-        if self.preview_joint and cmds.objExists(self.preview_joint):
-            cmds.setAttr(f"{self.preview_joint}.rotate", 0, 0, 0)
+        orient = node_path(self.preview_orient)
+        if orient:
+            cmds.delete(orient)
+        path = self.preview_path()
+        if path:
+            cmds.setAttr(f"{path}.rotate", 0, 0, 0)
         self.preview_orient = None
         self.preview_orient_key = None
 
-    def select_vertices(self):
-        mesh = self.main_window.skeleton.mesh
-        vertex_ids = self.joint_data.vertex_ids
+    def delete_preview_joint(self):
+        self.remove_preview_callback()
+        path = self.preview_path()
+        if path:
+            cmds.delete(path)
+        self.preview_joint = None
+        self.preview_name = None
 
-        if not mesh or not vertex_ids:
-            return
-
-        vertices = [
-            "{}.vtx[{}]".format(mesh, vertex_id)
-            for vertex_id in vertex_ids
-        ]
-
-        cmds.select(vertices, replace=True)
-
-    def clear_vertices(self):
-        self.joint_data.clear_vertices()
-        self.update_display()
+    def delete_previews(self):
+        # Orient resets the preview joint's rotation, so the joint goes last.
+        self.delete_preview_link()
+        self.delete_preview_orient()
+        self.delete_preview_joint()
 
     def request_delete(self):
         self.delete_requested.emit(self)
@@ -598,6 +667,7 @@ class RegionWidget(QtWidgets.QFrame):
 
     def request_delete(self):
         for joint_widget in self.joint_widgets:
+            joint_widget.delete_previews()
             self.remove_tree_item(joint_widget.tree_item)
         self.joint_widgets.clear()
         self.region_data.joints.clear()
@@ -613,10 +683,10 @@ class RegionWidget(QtWidgets.QFrame):
         existing_names = self.main_window.skeleton.all_joint_names()
 
         index = len(self.region_data.joints) + 1
-        name = "Joint_{}".format(index)
+        name = f"Joint_{index}"
         while name in existing_names:
             index += 1
-            name = "Joint_{}".format(index)
+            name = f"Joint_{index}"
         return name
 
     def add_joint(self):
@@ -636,15 +706,13 @@ class RegionWidget(QtWidgets.QFrame):
         self.joint_content.show()
         self.expand_button.setText("▼")
         self.update_rig_guide_visibility()
-        # Sync trigger: new joint. The tree signal also resyncs once this
-        # method returns, after preview_joint exists.
+        joint_widget.create_preview()
+        # Sync trigger: new joint. Its preview already exists, so links/aims build here.
         self.main_window.sync_hierarchy_data()
         self.updateGeometry()
-        joint_widget.preview_joint = create_preview_joint(joint_name)
 
     def remove_joint(self, joint_widget):
-        joint_widget.delete_preview_link()
-        joint_widget.delete_preview_orient()
+        joint_widget.delete_previews()
         self.remove_tree_item(joint_widget.tree_item)
 
         self.joint_layout.removeWidget(joint_widget)

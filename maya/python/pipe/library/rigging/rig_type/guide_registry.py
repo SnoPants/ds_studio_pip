@@ -45,15 +45,15 @@ class BuilderSpec:
         for parameter in self.parameters:
             value = values.get(parameter.key, parameter.default)
             if parameter.kind == 'bool' and type(value) is not bool:
-                errors.append('{} must be on or off.'.format(parameter.label))
+                errors.append(f'{parameter.label} must be on or off.')
             elif parameter.kind == 'string' and not isinstance(value, str):
-                errors.append('{} must be text.'.format(parameter.label))
+                errors.append(f'{parameter.label} must be text.')
             elif parameter.kind == 'choice' and value not in parameter.choices:
-                errors.append('{} has an unknown option.'.format(parameter.label))
+                errors.append(f'{parameter.label} has an unknown option.')
             elif parameter.kind in ('int', 'float'):
                 valid_type = type(value) is int if parameter.kind == 'int' else type(value) in (int, float)
                 if not valid_type or not parameter.minimum <= value <= parameter.maximum:
-                    errors.append('{} is outside its allowed range.'.format(parameter.label))
+                    errors.append(f'{parameter.label} is outside its allowed range.')
         if errors:
             return ValidationResult(tuple(errors))
         return self.validator(region, skeleton, dict(self.defaults(), **values))
@@ -94,7 +94,7 @@ def validate_biped_limb(region, skeleton, values):
     if len(joints) != len(region.joints) or len(all_joints) != len(list(skeleton.joints())):
         errors.append('Joint IDs are duplicated in the mapping.')
     if len(joints) != expected:
-        errors.append('Requires exactly {} joints in this region; found {}.'.format(expected, len(joints)))
+        errors.append(f'Requires exactly {expected} joints in this region; found {len(joints)}.')
     roots = []
     children = {uid: [] for uid in joints}
     for joint in joints.values():

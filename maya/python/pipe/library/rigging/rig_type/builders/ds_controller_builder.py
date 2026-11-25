@@ -17,6 +17,7 @@ class RigCtrl:
 
     def _load_nurbs_data(self):
         global _NURBS_DATA
+        #TODO: Resetting _NURBS_DATA here means the cache below never hits; the JSON is reloaded every call.
         _NURBS_DATA = None
 
         if _NURBS_DATA:
@@ -119,4 +120,5 @@ class RigCtrl:
                 cmds.parent(shape, trg, s=True, r=True)
             
             cmds.delete(trg_shape)
+            #TODO: This return is inside the loop, so only the first target is replaced.
             return

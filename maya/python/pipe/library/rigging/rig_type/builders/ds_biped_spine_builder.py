@@ -108,7 +108,7 @@ class BipedSpineBuilder(Builder):
 
     def BND_JNTs_CVs(sel):
         
-        cvs = cmds.ls('{0}.cv[:]'.format(sel), fl = True)
+        cvs = cmds.ls(f'{sel}.cv[:]', fl = True)
         
         print(cvs)
         
@@ -127,6 +127,7 @@ class BipedSpineBuilder(Builder):
             cmds.move(x, y, z)
             cmds.select(d=True)
         
+    #TODO: Leftover prototyping. This runs in the class body at import time (cmds.ls(sl=True)[0], input()), so importing this module crashes.
     getSel= cmds.ls(sl=True)[0]
     getShape= cmds.listRelatives(getSel, shapes=True)[0]
     print(getSel,getShape)

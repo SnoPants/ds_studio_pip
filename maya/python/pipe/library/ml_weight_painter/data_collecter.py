@@ -47,11 +47,11 @@ def get_skinned_joints(sel):
     
     def checkSel(sel):
         if len(sel) > 1:
-            raise Exception('More than one object was selected. Please select one Mesh. This was your selection: {}'.format(sel))
+            raise Exception(f'More than one object was selected. Please select one Mesh. This was your selection: {sel}')
         
     def checkCluster(cluster, sel):
         if not cluster:
-            raise Exception('This object has no skin cluster. This was your selection: {}'.format(sel))
+            raise Exception(f'This object has no skin cluster. This was your selection: {sel}')
         
     checkSel(sel)
     mesh= sel[0]

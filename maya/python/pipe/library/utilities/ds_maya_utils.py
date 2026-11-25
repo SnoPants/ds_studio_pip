@@ -158,14 +158,30 @@ def delete_node(node):
     if cmds.objExists(node):
         cmds.delete(node)
 
+def node_uuid(node):
+    return cmds.ls(node, uuid=True)[0]
+
+def node_path(uuid):
+    """Resolve a Maya UUID to the node's current long path, or None if it is gone."""
+    nodes = cmds.ls(uuid, long=True) if uuid else None
+    return nodes[0] if nodes else None
+
+def world_rotation(node):
+    """World-space XYZ rotation in degrees, read from the world matrix so rotate order doesn't matter."""
+    matrix = om.MMatrix(cmds.xform(node, query=True, worldSpace=True, matrix=True))
+    rotation = om.MTransformationMatrix(matrix).rotation().reorder(om.MEulerRotation.kXYZ)
+    return [om.MAngle(angle).asDegrees() for angle in (rotation.x, rotation.y, rotation.z)]
+
 def create_preview_joint(name):
     control = create_saved_curve("axis", name)
     if control:
         for shape in cmds.listRelatives(control, shapes=True, fullPath=True) or []:
             cmds.setAttr(f"{shape}.alwaysDrawOnTop", True)
-    return add_to_preview_grp(control)
+    return add_to_preview_grp(control, "PreviewJoints")
 
 def create_preview_joint_link(parent, target):
+    # Callers pass long paths; only the leaf is usable in a node name.
+    target = target.split("|")[-1]
     curve = cmds.curve(degree=1, point=[(0, 0, 0), (0, 1, 0)], name=f"{target}_Link_Curve")
     cmds.setAttr(f"{curve}.alwaysDrawOnTop", True)
     cmds.setAttr(f"{curve}.overrideEnabled", True)
@@ -178,16 +194,21 @@ def create_preview_joint_link(parent, target):
         cmds.parent(handle, group)
         cmds.pointConstraint(driver, handle)
 
-    return add_to_preview_grp(group)
+    return add_to_preview_grp(group, "PreviewLinks")
 
-def add_to_preview_grp(obj):
+def add_to_preview_grp(obj, subgroup):
 
     preview_group = "|PreviewGroup"
     if cmds.objExists(preview_group) == False:
         preview_group = cmds.group(empty= True, name= preview_group)
         preview_group = cmds.ls(preview_group, long = True)[0]
 
-    return cmds.parent(obj, preview_group)[0]
+    group = f"{preview_group}|{subgroup}"
+    if cmds.objExists(group) == False:
+        group = cmds.group(empty= True, name= subgroup, parent= preview_group)
+        group = cmds.ls(group, long = True)[0]
+
+    return cmds.ls(cmds.parent(obj, group)[0], long = True)[0]
 
 def create_preview_aimconstraint(parent, target, primary_axis, secondary_axis):
 

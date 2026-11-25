@@ -6,14 +6,17 @@ class JointData:
 
     AXES = ('X', 'Y', 'Z', '-X', '-Y', '-Z')
 
-    def __init__(self, name, parent=None, vertex_ids=None, uid=None,
-                 primary_axis='X', secondary_axis='Y', orient_to_world=False):
+    def __init__(self, name, parent=None, uid=None,
+                 primary_axis='X', secondary_axis='Y', orient_to_child=False, position=None, rotation=None):
         self.uid = uid or str(uuid.uuid4())
         self.name = name
         self.parent = parent
-        self.vertex_ids = vertex_ids or []
+        # World-space placement; the skeleton builds exactly here.
+        self.position = list(position) if position is not None else None
+        # World-space XYZ degrees, baked into the built joint's jointOrient.
+        self.rotation = list(rotation) if rotation is not None else None
         self.set_orientation(primary_axis, secondary_axis)
-        self.orient_to_world = bool(orient_to_world)
+        self.orient_to_child = bool(orient_to_child)
 
     def set_orientation(self, primary_axis, secondary_axis):
         """Store distinct local axes; this does not change a Maya scene node."""
@@ -44,33 +47,36 @@ class JointData:
         self.name = name
         return True
 
-    def set_vertices(self, vertex_ids):
-        """Assign vertices. These index SkeletonData.mesh, the one target mesh."""
-        self.vertex_ids = list(vertex_ids)
+    def set_position(self, position):
+        self.position = list(position)
 
-    def clear_vertices(self):
-        self.vertex_ids = []
+    def set_rotation(self, rotation):
+        self.rotation = list(rotation)
 
     def to_dict(self):
         return {
             "uid": self.uid,
             "name": self.name,
             "parent": self.parent,
-            "vertex_ids": self.vertex_ids,
+            "position": self.position,
+            "rotation": self.rotation,
             "primary_axis": self.primary_axis,
             "secondary_axis": self.secondary_axis,
-            "orient_to_world": self.orient_to_world,
+            "orient_to_child": self.orient_to_child,
         }
 
     def from_dict(data):
+        # Legacy "vertex_ids" keys are ignored; joints are placed by position only.
         return JointData(
             name=data["name"],
             parent=data.get("parent"),
-            vertex_ids=data.get("vertex_ids", []),
             uid=data.get("uid"),
             primary_axis=data.get("primary_axis", "X"),
             secondary_axis=data.get("secondary_axis", "Y"),
-            orient_to_world=data.get("orient_to_world", False),
+            # Schema 6 and earlier stored this as "orient_to_world".
+            orient_to_child=data.get("orient_to_child", data.get("orient_to_world", False)),
+            position=data.get("position"),
+            rotation=data.get("rotation"),
         )
 
 
@@ -112,7 +118,7 @@ class RegionData:
 
 class SkeletonData:
 
-    SCHEMA_VERSION = 6
+    SCHEMA_VERSION = 7
 
     def __init__(self, mesh=None):
         self.mesh = mesh

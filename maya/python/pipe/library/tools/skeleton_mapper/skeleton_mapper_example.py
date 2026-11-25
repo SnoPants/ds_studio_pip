@@ -332,7 +332,7 @@ class JointRowWidget(QtWidgets.QWidget):
         )
 
         self.count_label.setText(
-            "{} verts".format(count)
+            f"{count} verts"
         )
 
         if self.vertex_ids:

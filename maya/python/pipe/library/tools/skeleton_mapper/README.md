@@ -181,13 +181,15 @@ Auto-generated names (`Region_N`) are chosen by scanning existing names rather t
 
 `SkeletonData.mesh` is the single target. `JointData` does **not** carry its own mesh.
 
-A vertex ID is an index into one specific mesh's vertex array — `body_GEO.vtx[1204]` and `head_GEO.vtx[1204]` are unrelated points — so every `vertex_ids` list is meaningless without a resolvable mesh. Storing that per joint was duplicate state of the worst kind: it was written by `set_vertices`, omitted from `to_dict()`, and read back as `None` by `from_dict()`, so it silently vanished on every round-trip.
+Joints are placed by world-space `position`, not by stored vertex IDs. **Set** still uses vertices: it takes the selected target-mesh vertices, places the preview joint at their centroid, and stores only that centroid. Moving the preview in the viewport or typing in the X/Y/Z fields updates `position`, and the build places every joint exactly where its preview sits (`build_skeleton` reads the preview positions before building).
+
+The build also reads each preview's world rotation into `rotation` (XYZ degrees, from the aim constraint or a manual rotate) and bakes it into the joint's `jointOrient`, leaving `rotate` at zero. A joint with no `rotation` is oriented to world.
 
-Rather than serialize the duplicate, the constraint is enforced at the point of entry: `set_vertices` refuses vertices that are not on the target mesh, and refuses entirely when no target is set. That makes `JointData.mesh` provably redundant, so it was removed. Removing it is not a schema change, because it was never written to JSON.
+Vertex IDs are no longer kept because a vertex index is meaningless without its mesh and goes stale the moment the user moves the joint by hand. `set_vertices` still refuses vertices that are not on the target mesh, and refuses entirely when no target is set. `from_dict()` ignores a legacy `vertex_ids` key, so older files still load (without placement).
 
 The consequence to accept is that one mapping covers one mesh. Multi-mesh characters need either a merged mesh or one mapping per mesh — and the latter splits the hierarchy, since parenting spans the whole skeleton. If that becomes a real constraint, the fix is per-joint mesh plus a derived `SkeletonData.meshes()` accessor, not a second stored field.
 
-Both entry points share one validity check. `use_selected_mesh()` takes the Maya selection, `commit_target_mesh()` takes hand-typed text from `mesh_field`, and both go through `set_target_mesh()`. Changing the target while joints still hold vertex IDs warns, since those indices do not carry over.
+Both entry points share one validity check. `use_selected_mesh()` takes the Maya selection, `commit_target_mesh()` takes hand-typed text from `mesh_field`, and both go through `set_target_mesh()`. Changing the target while joints are already placed warns, since those positions were picked on the old mesh.
 
 `mesh_field` is wired with `editingFinished`, not `textChanged`: `setText()` does not emit `editingFinished`, so `use_selected_mesh()` writing the field cannot feed back into the model.
 
@@ -237,13 +239,15 @@ Both are available in Maya 2025 (`skinCluster -rbm/-ubk`, `deformerWeights -path
           "uid": "8f14e45f-ceea-467a-9c1f-2f0a1b3d4c5e",
           "name": "root_jnt",
           "parent": null,
-          "vertex_ids": [120, 121, 144, 145]
+          "position": [0.0, 95.2, 1.4],
+          "rotation": [0.0, 0.0, 90.0]
         },
         {
           "uid": "b1d7c3a2-40e8-4f11-9c6d-7e2a5b8f0139",
           "name": "spine_01_jnt",
           "parent": "8f14e45f-ceea-467a-9c1f-2f0a1b3d4c5e",
-          "vertex_ids": [302, 303, 326, 327]
+          "position": [0.0, 108.6, 0.9],
+          "rotation": [0.0, 0.0, 90.0]
         }
       ]
     }
@@ -255,7 +259,7 @@ Both are available in Maya 2025 (`skinCluster -rbm/-ubk`, `deformerWeights -path
 
 **Consequence to confirm:** `parent` now references a `uid` rather than a joint name. This follows from making `uid` the identity — a name-based reference breaks the moment a user renames a joint, which the UI allows freely. The cost is that the JSON is no longer readable at a glance. Joint names should still be unique within a mapping, because Maya requires it and because errors need to be legible.
 
-Vertex IDs are stored as integers; Maya component strings can be reconstructed when needed.
+Positions are world-space `[x, y, z]` and are what the build uses; `null` means the joint was never placed and builds at the origin with a warning.
 
 Bumping to `schema_version` 2 covers both additions. Version 1 files can be migrated by generating a `uid` per region and per joint, rewriting `parent` from name to `uid`, and applying the default orientation config. `from_dict()` already generates a `uid` when one is absent, so version 1 files load without a separate migration pass.
 
