@@ -1,13 +1,20 @@
 import uuid
 from copy import deepcopy
 
+DEFAULT_MIRROR_SETTINGS = {
+    "axis": "X",
+    "plane_offset": 0.0,
+    "direction": "Left → Right",
+    "tolerance": 0.001,
+    "left_token": "_l",
+    "right_token": "_r",
+}
 
 class JointData:
 
     AXES = ('X', 'Y', 'Z', '-X', '-Y', '-Z')
 
-    def __init__(self, name, parent=None, uid=None,
-                 primary_axis='X', secondary_axis='Y', orient_to_child=False, position=None, rotation=None, planarize=False):
+    def __init__(self, name, parent=None, uid=None, primary_axis='X', secondary_axis='Y', orient_to_child=False, position=None, rotation=None, planarize=False, mirror_of=None):
         self.uid = uid or str(uuid.uuid4())
         self.name = name
         self.parent = parent
@@ -17,7 +24,9 @@ class JointData:
         self.rotation = list(rotation) if rotation is not None else None
         self.set_orientation(primary_axis, secondary_axis)
         self.orient_to_child = bool(orient_to_child)
+        self.mirror_of = mirror_of
         self.planarize = bool(planarize)
+
 
     def set_orientation(self, primary_axis, secondary_axis):
         """Store distinct local axes; this does not change a Maya scene node."""
@@ -65,6 +74,7 @@ class JointData:
             "secondary_axis": self.secondary_axis,
             "orient_to_child": self.orient_to_child,
             "planarize": self.planarize,
+            "mirror_of": self.mirror_of,
         }
 
     def from_dict(data):
@@ -80,6 +90,7 @@ class JointData:
             position=data.get("position"),
             rotation=data.get("rotation"),
             planarize=data.get("planarize", False),
+            mirror_of=data.get("mirror_of"),
         )
 
 
@@ -90,6 +101,7 @@ class RegionData:
         self.name = name
         self.joints = []
         self.rig_guide = {'rig_type': None, 'builder_id': None, 'parameters': {}}
+        self.mirror_of = None
 
     def add_joint(self, name):
         joint = JointData(name)
@@ -109,11 +121,13 @@ class RegionData:
             "name": self.name,
             "joints": [joint.to_dict() for joint in self.joints],
             "rig_guide": deepcopy(self.rig_guide),
+            "mirror_of": self.mirror_of,
         }
 
     def from_dict(data):
         region = RegionData(name=data["name"], uid=data.get("uid"))
         region.rig_guide = deepcopy(data.get("rig_guide", region.rig_guide))
+        region.mirror_of = data.get("mirror_of")
         for joint_data in data.get("joints", []):
             region.joints.append(JointData.from_dict(joint_data))
         return region
@@ -191,6 +205,7 @@ class SkeletonData:
     def from_dict(data):
         skeleton = SkeletonData(mesh=data.get("mesh"))
         skeleton.build_skeleton_only = data.get("build_skeleton_only", True) is True
+        skeleton.mirror_settings.update({key: value for key, value in data.get("mirror_settings", {}).itmes() if key in DEFAULT_MIRROR_SETTINGS})
         for region_data in data.get("regions", []):
             skeleton.regions.append(RegionData.from_dict(region_data))
         return skeleton
