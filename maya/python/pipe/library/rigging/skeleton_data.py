@@ -7,7 +7,7 @@ class JointData:
     AXES = ('X', 'Y', 'Z', '-X', '-Y', '-Z')
 
     def __init__(self, name, parent=None, uid=None,
-                 primary_axis='X', secondary_axis='Y', orient_to_child=False, position=None, rotation=None):
+                 primary_axis='X', secondary_axis='Y', orient_to_child=False, position=None, rotation=None, planarize=False):
         self.uid = uid or str(uuid.uuid4())
         self.name = name
         self.parent = parent
@@ -17,6 +17,7 @@ class JointData:
         self.rotation = list(rotation) if rotation is not None else None
         self.set_orientation(primary_axis, secondary_axis)
         self.orient_to_child = bool(orient_to_child)
+        self.planarize = bool(planarize)
 
     def set_orientation(self, primary_axis, secondary_axis):
         """Store distinct local axes; this does not change a Maya scene node."""
@@ -63,6 +64,7 @@ class JointData:
             "primary_axis": self.primary_axis,
             "secondary_axis": self.secondary_axis,
             "orient_to_child": self.orient_to_child,
+            "planarize": self.planarize,
         }
 
     def from_dict(data):
@@ -77,6 +79,7 @@ class JointData:
             orient_to_child=data.get("orient_to_child", data.get("orient_to_world", False)),
             position=data.get("position"),
             rotation=data.get("rotation"),
+            planarize=data.get("planarize", False),
         )
 
 

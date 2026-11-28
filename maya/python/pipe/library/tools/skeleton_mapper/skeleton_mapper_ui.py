@@ -137,6 +137,21 @@ class SkeletonMapperUI(MayaUI):
 
     # Parent owns an aim constraint at its tree child when Orient Joint is on.
     def sync_preview_orients(self, tree_parents):
+        # TODO(planarize): Planarize design, to be written by hand.
+        #   - A run of consecutive Planarize-ticked joints in a region, following the
+        #     first child as the aim chain, shares one plane built from the ticked
+        #     joints only.
+        #   - Normal with sign alignment: for each consecutive triplet a, b, c,
+        #     n = (b - a) ^ (c - b). Flip n if its dot with the running total is
+        #     negative, then sum and normalize.
+        #   - Each ticked joint aims at its child with worldUpType "vector" and
+        #     worldUpVector = n. A ticked end joint with no child copies its
+        #     parent's orientation.
+        #   - Warn through RegionWidget.set_planarize_warning, falling back to scene up:
+        #       fewer than 3 in a run: "Planarize needs 3+ connected ticked joints."
+        #       |n| about 0: "Planarize joints are in a straight line. Add a slight bend."
+        #   - Add the planarize flag and the run to preview_orient_key so the
+        #     constraints rebuild.
         joint_widgets = self.joint_widgets_by_uid()
         tree_children = {}
         for child_uid, parent_uid  in tree_parents.items():

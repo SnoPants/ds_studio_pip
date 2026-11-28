@@ -268,12 +268,18 @@ class JointWidget(QtWidgets.QWidget):
             "Automatically orient the preview joint toward its child "
             "in the Skeleton Hierarchy."
         )
+        self.planarize_checkbox = QtWidgets.QCheckBox("Planarize")
+        self.planarize_checkbox.setToolTip(
+            "Orient this joint in the plane of the connected Planarize-ticked "
+            "joints in this region. Needs 3+ connected ticked joints."
+        )
         self.refresh_orientation_controls()
         orientation_form.addRow("Primary axis", self.primary_axis_combo)
         secondary_row = QtWidgets.QHBoxLayout()
         secondary_row.addWidget(self.secondary_axis_combo)
         secondary_row.addStretch()
         secondary_row.addWidget(self.orient_joint_checkbox)
+        secondary_row.addWidget(self.planarize_checkbox)
         orientation_form.addRow("Secondary axis", secondary_row)
         self.primary_axis_combo.setFixedWidth(90)
         self.secondary_axis_combo.setFixedWidth(90)
@@ -281,6 +287,7 @@ class JointWidget(QtWidgets.QWidget):
         self.primary_axis_combo.currentTextChanged.connect(self.update_primary_axis)
         self.secondary_axis_combo.currentTextChanged.connect(self.update_secondary_axis)
         self.orient_joint_checkbox.toggled.connect(self.update_orient_joint)
+        self.planarize_checkbox.toggled.connect(self.update_planarize)
 
         self.position_group = QtWidgets.QGroupBox("Position")
         position_form = QtWidgets.QFormLayout(self.position_group)
@@ -319,9 +326,17 @@ class JointWidget(QtWidgets.QWidget):
         self.refresh_orientation_controls()
         self.main_window.sync_hierarchy_data()
 
+    def update_planarize(self, checked):
+        self.joint_data.planarize = checked
+        self.main_window.sync_hierarchy_data()
+
     def refresh_orientation_controls(self):
         with QtCore.QSignalBlocker(self.orient_joint_checkbox):
             self.orient_joint_checkbox.setChecked(self.joint_data.orient_to_child)
+        with QtCore.QSignalBlocker(self.planarize_checkbox):
+            self.planarize_checkbox.setChecked(self.joint_data.planarize)
+            # Planarize only applies to joints that orient to their child.
+            self.planarize_checkbox.setEnabled(self.joint_data.orient_to_child)
         with QtCore.QSignalBlocker(self.primary_axis_combo):
             self.primary_axis_combo.setCurrentText(self.joint_data.primary_axis)
         with QtCore.QSignalBlocker(self.secondary_axis_combo):
@@ -604,6 +619,12 @@ class RegionWidget(QtWidgets.QFrame):
 
         main_layout.addWidget(self.joint_content)
 
+        self.planarize_warning_label = QtWidgets.QLabel()
+        self.planarize_warning_label.setWordWrap(True)
+        self.planarize_warning_label.setStyleSheet("color: #c8a020;")
+        self.planarize_warning_label.hide()
+        main_layout.addWidget(self.planarize_warning_label)
+
         self.rig_guide_widget = RigGuideWidget(main_window, region_data, parent=self)
         main_layout.addWidget(self.rig_guide_widget)
 
@@ -617,9 +638,15 @@ class RegionWidget(QtWidgets.QFrame):
     def toggle_region(self):
         visible = not self.joint_content.isVisible()
         self.joint_content.setVisible(visible)
+        self.planarize_warning_label.setVisible(visible and bool(self.planarize_warning_label.text()))
         self.update_rig_guide_visibility()
         self.expand_button.setText("▼" if visible else "▶")
         self.updateGeometry()
+
+    def set_planarize_warning(self, message):
+        """Show a planarize warning under the joints; empty or None clears it."""
+        self.planarize_warning_label.setText(message or "")
+        self.planarize_warning_label.setVisible(bool(message) and self.joint_content.isVisibleTo(self))
 
     def update_rig_guide_visibility(self):
         """Rig settings appear only when expanded and rig config is in scope.

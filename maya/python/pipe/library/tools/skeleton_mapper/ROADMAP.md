@@ -21,6 +21,11 @@ Mapping data remains the source of truth during authoring. A future builder shou
 - Complete versioned save/load so the authored mapping and settings can be restored.
 - Complete skeleton validation and then build the skeleton end to end from the mapping.
 - Keep **Build skeleton only** as the path for working without rig configuration. It disables rig controls and skips builder validation while retaining their settings; skeleton validation will still be required when building is implemented.
+- **Planarize (by hand).** The UI is in place: a per-joint Planarize checkbox, enabled only with Orient Joint, and a region warning label. The maths and constraint logic remain, with notes in `sync_preview_orients` and `create_preview_aimconstraint`:
+  - A run of consecutive ticked joints along the first-child aim chain shares one plane from the ticked joints only. Its normal is the sign-aligned sum of `(b - a) ^ (c - b)` over each triplet.
+  - Warn with "Planarize needs 3+ connected ticked joints." or "Planarize joints are in a straight line. Add a slight bend.", falling back to scene up.
+  - Aim constraints take `wut="vector"`, `wu=n`.
+  - The preview move callback updates `worldUpVector` with `setAttr` instead of rebuilding the constraint.
 
 Current UI/model work includes stable joint IDs, tree-to-model parent synchronization, per-joint primary/secondary axes, region builder settings, and the skeleton-only toggle. Primary and secondary axes are chosen from X/Y/Z/-X/-Y/-Z, must use different letters (X and -X conflict), and default to X/Y. Settings are included in dictionary serialization, but the Save/Load actions and actual Build operation remain placeholders. No Maya DAG updates or rig execution have been added as part of this UI work.
 

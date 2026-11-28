@@ -211,6 +211,10 @@ def add_to_preview_grp(obj, subgroup):
     return cmds.ls(cmds.parent(obj, group)[0], long = True)[0]
 
 def create_preview_aimconstraint(parent, target, primary_axis, secondary_axis):
+    # TODO(planarize): add an optional up_vector=None. When it's set, use
+    #   wut="vector", wu=up_vector, with "scene" as the fallback. Planarized
+    #   joints should get cmds.setAttr(con + ".worldUpVector", *n) from the
+    #   preview move callback instead of rebuilding the constraint.
 
     return cmds.aimConstraint(target, parent, aim= AIM_AXIS_VECTORS[primary_axis], upVector= AIM_AXIS_VECTORS[secondary_axis], wut="scene")[0]
 
